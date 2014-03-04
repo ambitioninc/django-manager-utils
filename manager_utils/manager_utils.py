@@ -47,16 +47,16 @@ class ManagerUtilsMixin(object):
             fields_to_update: A list of fields to be updated. Only these fields will be updated
         """
         updated_rows = [
-            chain((model_obj.id,), (getattr(model_obj, field_name) for field_name in fields_to_update))
+            [model_obj.id] + [getattr(model_obj, field_name) for field_name in fields_to_update]
             for model_obj in model_objs
         ]
-        if len(updated_rows) == 0:
+        if len(updated_rows) == 0 or len(fields_to_update) == 0:
             return
 
         # Execute the bulk update
         Query().from_table(
             table=self.model,
-            fields=chain(('id',), fields_to_update),
+            fields=chain(['id'] + fields_to_update),
         ).update(updated_rows)
 
     def upsert(self, defaults=None, updates=None, **kwargs):

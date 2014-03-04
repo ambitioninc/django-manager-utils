@@ -14,13 +14,17 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# Setup celery
+import djcelery
+djcelery.setup_loader()
+
 # Add 'postgresql_psycopg2', 'mysql', 'sqlite3'
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # postgresql_psycopg2',
-        'NAME': 'entity',
-        'USER': 'entity',
-        'PASSWORD': 'entity',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'ambition_dev',
+        'USER': 'ambition_dev',
+        'PASSWORD': 'ambition_dev',
         'HOST': 'localhost'
     }
 }
@@ -117,9 +121,16 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.sites',
+    # 'django.contrib.messages',
+    # 'django.contrib.staticfiles',
+    'django.contrib.admin',
+    'entity',
     'django_nose',
-    'manager_utils',
-    'querybuilder',
+    'djcelery',
     'south',
     'test_project',
 )

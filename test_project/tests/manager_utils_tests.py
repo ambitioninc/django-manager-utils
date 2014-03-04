@@ -110,3 +110,94 @@ class SingleTests(TestCase):
         model_obj = G(TestModel)
         G(TestModel)
         self.assertEquals(model_obj, TestModel.objects.filter(id=model_obj.id).single())
+
+
+class TestBulkUpdate(TestCase):
+    """
+    Tests the bulk_update function.
+    """
+    def test_none(self):
+        """
+        Tests when no values are provided to bulk update.
+        """
+        TestModel.objects.bulk_update([], [])
+
+    def test_objs_no_fields_to_update(self):
+        """
+        Tests when objects are given to bulk update with no fields to update. Nothing should change in
+        the objects.
+        """
+        test_obj_1 = G(TestModel, int_field=1)
+        test_obj_2 = G(TestModel, int_field=2)
+        # Change the int fields on the models
+        test_obj_1.int_field = 3
+        test_obj_2.int_field = 4
+        # Do a bulk update with no update fields
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], [])
+        # The test objects int fields should be untouched
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertEquals(test_obj_1.int_field, 1)
+        self.assertEquals(test_obj_2.int_field, 2)
+
+    def test_objs_one_field_to_update(self):
+        """
+        Tests when objects are given to bulk update with one field to update.
+        """
+        test_obj_1 = G(TestModel, int_field=1)
+        test_obj_2 = G(TestModel, int_field=2)
+        # Change the int fields on the models
+        test_obj_1.int_field = 3
+        test_obj_2.int_field = 4
+        # Do a bulk update with the int fields
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], ['int_field'])
+        # The test objects int fields should be untouched
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertEquals(test_obj_1.int_field, 3)
+        self.assertEquals(test_obj_2.int_field, 4)
+
+    def test_objs_one_field_to_update_ignore_other_field(self):
+        """
+        Tests when objects are given to bulk update with one field to update. This test changes another field
+        not included in the update and verifies it is not updated.
+        """
+        test_obj_1 = G(TestModel, int_field=1, float_field=1.0)
+        test_obj_2 = G(TestModel, int_field=2, float_field=2.0)
+        # Change the int and float fields on the models
+        test_obj_1.int_field = 3
+        test_obj_2.int_field = 4
+        test_obj_1.float_field = 3.0
+        test_obj_2.float_field = 4.0
+        # Do a bulk update with the int fields
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], ['int_field'])
+        # The test objects int fields should be untouched
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertEquals(test_obj_1.int_field, 3)
+        self.assertEquals(test_obj_2.int_field, 4)
+        # The float fields should not be updated
+        self.assertEquals(test_obj_1.float_field, 1.0)
+        self.assertEquals(test_obj_2.float_field, 2.0)
+
+    def test_objs_two_fields_to_update(self):
+        """
+        Tests when objects are given to bulk update with two fields to update.
+        """
+        test_obj_1 = G(TestModel, int_field=1, float_field=1.0)
+        test_obj_2 = G(TestModel, int_field=2, float_field=2.0)
+        # Change the int and float fields on the models
+        test_obj_1.int_field = 3
+        test_obj_2.int_field = 4
+        test_obj_1.float_field = 3.0
+        test_obj_2.float_field = 4.0
+        # Do a bulk update with the int fields
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], ['int_field', 'float_field'])
+        # The test objects int fields should be untouched
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertEquals(test_obj_1.int_field, 3)
+        self.assertEquals(test_obj_2.int_field, 4)
+        # The float fields should be updated
+        self.assertEquals(test_obj_1.float_field, 3.0)
+        self.assertEquals(test_obj_2.float_field, 4.0)

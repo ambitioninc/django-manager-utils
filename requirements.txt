@@ -4,7 +4,6 @@ django-nose==1.1
 pep8
 psycopg2==2.4.5
 pyflakes
-south==0.7.6
 
 git+https://github.com/wesokes/django-query-builder.git@0.5.2
 # Note that Django is a requirement, but it is installed in the .travis.yml file in order to test against different versions
