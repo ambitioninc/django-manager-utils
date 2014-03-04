@@ -70,8 +70,11 @@ class ManagerUtilsMixin(object):
                 values provided in the defaults when inserting the object.
             **kwargs: These values provide the arguments used when checking for the existence of
                 the object.
+
+        Returns:
+            A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
         """
-        obj, created = self.model.objects.get_or_create(defaults=defaults, **kwargs)
+        obj, created = self.model.objects.get_or_create(defaults=defaults or {}, **kwargs)
 
         if updates is not None:
             for k, v in updates.iteritems():
@@ -87,7 +90,6 @@ class ManagerUtilsMixin(object):
         Returns:
             A model object if one exists with the query params, None otherwise.
         """
-        print self.get_queryset().__class__
         return self.get_queryset().get_or_none(**query_params)
 
     def single(self):

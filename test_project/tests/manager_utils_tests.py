@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django_dynamic_fixture import G
 
-from test_project.models import TestModel, ForeignKeyTestModel
+from test_project.models import TestModel
 
 
 class GetOrNoneTests(TestCase):
@@ -201,3 +201,118 @@ class TestBulkUpdate(TestCase):
         # The float fields should be updated
         self.assertEquals(test_obj_1.float_field, 3.0)
         self.assertEquals(test_obj_2.float_field, 4.0)
+
+
+class TestUpsert(TestCase):
+    """
+    Tests the upsert method in the manager utils.
+    """
+    def test_upsert_creation_no_defaults(self):
+        """
+        Tests an upsert that results in a created object. Don't use defaults
+        """
+        model_obj, created = TestModel.objects.upsert(int_field=1)
+        self.assertTrue(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertIsNone(model_obj.float_field)
+        self.assertIsNone(model_obj.char_field)
+
+    def test_upsert_creation_defaults(self):
+        """
+        Tests an upsert that results in a created object. Defaults are used.
+        """
+        model_obj, created = TestModel.objects.upsert(int_field=1, defaults={'float_field': 1.0})
+        self.assertTrue(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertIsNone(model_obj.char_field)
+
+    def test_upsert_creation_updates(self):
+        """
+        Tests an upsert that results in a created object. Updates are used.
+        """
+        model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
+        self.assertTrue(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertIsNone(model_obj.char_field)
+
+    def test_upsert_creation_defaults_updates(self):
+        """
+        Tests an upsert that results in a created object. Defaults are used and so are updates.
+        """
+        model_obj, created = TestModel.objects.upsert(
+            int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello'})
+        self.assertTrue(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertEquals(model_obj.char_field, 'Hello')
+
+    def test_upsert_creation_defaults_updates_override(self):
+        """
+        Tests an upsert that results in a created object. Defaults are used and so are updates. Updates
+        override the defaults.
+        """
+        model_obj, created = TestModel.objects.upsert(
+            int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello', 'float_field': 2.0})
+        self.assertTrue(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 2.0)
+        self.assertEquals(model_obj.char_field, 'Hello')
+
+    def test_upsert_no_creation_no_defaults(self):
+        """
+        Tests an upsert that already exists. Don't use defaults
+        """
+        G(TestModel, int_field=1, float_field=None, char_field=None)
+        model_obj, created = TestModel.objects.upsert(int_field=1)
+        self.assertFalse(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertIsNone(model_obj.float_field)
+        self.assertIsNone(model_obj.char_field)
+
+    def test_upsert_no_creation_defaults(self):
+        """
+        Tests an upsert that already exists. Defaults are used but don't matter since the object already existed.
+        """
+        G(TestModel, int_field=1, float_field=None, char_field=None)
+        model_obj, created = TestModel.objects.upsert(int_field=1, defaults={'float_field': 1.0})
+        self.assertFalse(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertIsNone(model_obj.float_field)
+        self.assertIsNone(model_obj.char_field)
+
+    def test_upsert_no_creation_updates(self):
+        """
+        Tests an upsert that already exists. Updates are used.
+        """
+        G(TestModel, int_field=1, float_field=2.0, char_field=None)
+        model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
+        self.assertFalse(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertIsNone(model_obj.char_field)
+
+    def test_upsert_no_creation_defaults_updates(self):
+        """
+        Tests an upsert that already exists. Defaults are used and so are updates.
+        """
+        G(TestModel, int_field=1, float_field=2.0, char_field='Hi')
+        model_obj, created = TestModel.objects.upsert(
+            int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello'})
+        self.assertFalse(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 2.0)
+        self.assertEquals(model_obj.char_field, 'Hello')
+
+    def test_upsert_no_creation_defaults_updates_override(self):
+        """
+        Tests an upsert that already exists. Defaults are used and so are updates. Updates override the defaults.
+        """
+        G(TestModel, int_field=1, float_field=3.0, char_field='Hi')
+        model_obj, created = TestModel.objects.upsert(
+            int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello', 'float_field': 2.0})
+        self.assertFalse(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.float_field, 2.0)
+        self.assertEquals(model_obj.char_field, 'Hello')
