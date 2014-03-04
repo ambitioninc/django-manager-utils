@@ -1,4 +1,5 @@
 from django.db import models
+from manager_utils import ManagerUtilsManager
 
 
 class ForeignKeyTestModel(models.Model):
@@ -13,3 +14,5 @@ class TestModel(models.Model):
     char_field = models.CharField(max_length=128)
     float_field = models.FloatField()
     foreign_key = models.ForeignKey(ForeignKeyTestModel)
+
+    objects = ManagerUtilsManager()

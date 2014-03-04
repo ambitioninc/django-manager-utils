@@ -117,8 +117,8 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'callable_field',
     'django_nose',
+    'manager_utils',
     'querybuilder',
     'south',
     'test_project',

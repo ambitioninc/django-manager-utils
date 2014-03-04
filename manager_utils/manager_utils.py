@@ -1,6 +1,7 @@
 from itertools import chain
 
-from django.db.models import QuerySet
+from django.db.models import Manager
+from django.db.models.query import QuerySet
 from querybuilder.query import Query
 
 
@@ -86,6 +87,7 @@ class ManagerUtilsMixin(object):
         Returns:
             A model object if one exists with the query params, None otherwise.
         """
+        print self.get_queryset().__class__
         return self.get_queryset().get_or_none(**query_params)
 
     def single(self):
@@ -94,3 +96,11 @@ class ManagerUtilsMixin(object):
         than one or no value, an exception is raised.
         """
         return self.get_queryset().single()
+
+
+class ManagerUtilsManager(ManagerUtilsMixin, Manager):
+    """
+    A class that can be used as a manager. It already inherits the Django Manager class and adds
+    the mixin.
+    """
+    pass

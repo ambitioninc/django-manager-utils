@@ -1,1 +1,1 @@
-from .fields import CallableField
+from .manager_utils import ManagerUtilsMixin, ManagerUtilsManager
