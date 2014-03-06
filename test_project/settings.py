@@ -19,7 +19,7 @@ if test_db is not None:
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'USER': 'postgres',
-            'NAME': 'manger_utils',
+            'NAME': 'manager_utils',
         }
     }
 else:
