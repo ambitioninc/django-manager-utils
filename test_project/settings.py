@@ -1,4 +1,4 @@
-# Django settings for test_project project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -13,15 +13,25 @@ ADMINS = (
 MANAGERS = ADMINS
 
 # Add 'postgresql_psycopg2', 'mysql', 'sqlite3'
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # postgresql_psycopg2',
-        'NAME': 'ambition_dev',
-        'USER': 'ambition_dev',
-        'PASSWORD': 'ambition_dev',
-        'HOST': 'localhost'
+test_db = os.environ.get('DB', None)
+if test_db is not None:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'USER': 'postgres',
+            'NAME': 'manager_utils',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'ambition_dev',
+            'USER': 'ambition_dev',
+            'PASSWORD': 'ambition_dev',
+            'HOST': 'localhost'
+        }
+    }
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
