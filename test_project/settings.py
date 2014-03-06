@@ -5,8 +5,6 @@ TEMPLATE_DEBUG = DEBUG
 
 # Use the nose tests runner
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-# Disable south in testing
-SOUTH_TESTS_MIGRATE = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -127,7 +125,6 @@ INSTALLED_APPS = (
     'entity',
     'django_nose',
     'djcelery',
-    'south',
     'test_project',
 )
 
