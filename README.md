@@ -5,7 +5,21 @@ django-manager-utils
 Additional utilities for Django model managers.
 
 ## A Brief Overview
-Django manager utils allows a user to perform various functions not natively supported by Django's model managers. A function overview is below with links to more in-depth documentation and examples for each function.
+Django manager utils allows a user to perform various functions not natively supported by Django's model managers. To use the manager in your Django models, do:
+
+    from manager_utils import ManagerUtilsManager
+
+    class MyModel(Model):
+        objects = ManagerUtilsManager()
+
+If you want to extend an existing manager to use the manager utils, include mixin provided first (since it overrides the get_queryset function) as follows:
+
+    from manager_utils import ManagerUtilsMixin
+
+    class MyManager(ManagerUtilsMixin, Manager):
+        pass
+
+An overview of each util is below with links to more in-depth documentation and examples for each function.
 
 - [single](#single): Grabs a single element from table and verifies it is the only element.
 - [get_or_none](#get_or_none): Performs a get on a queryset and returns None if the object does not exist.
