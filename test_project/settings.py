@@ -126,7 +126,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'entity',
     'django_nose',
-    'djcelery',
     'south',
     'test_project',
 )
