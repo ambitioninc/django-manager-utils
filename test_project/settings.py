@@ -122,7 +122,6 @@ INSTALLED_APPS = (
     # 'django.contrib.messages',
     # 'django.contrib.staticfiles',
     'django.contrib.admin',
-    'entity',
     'django_nose',
     'south',
     'test_project',
