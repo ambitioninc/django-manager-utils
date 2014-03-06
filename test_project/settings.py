@@ -15,7 +15,7 @@ MANAGERS = ADMINS
 # Add 'postgresql_psycopg2', 'mysql', 'sqlite3'
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  #postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.sqlite3',  # postgresql_psycopg2',
         'NAME': 'ambition_dev',
         'USER': 'ambition_dev',
         'PASSWORD': 'ambition_dev',
