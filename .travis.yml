@@ -10,9 +10,7 @@ install:
 before_script:
   - find . | grep .py$ | grep -v /migrations | xargs pep8 --max-line-length=120
   - find . | grep .py$ | grep -v /migrations | grep -v __init__.py | xargs pyflakes
-  - psql -c "CREATE USER ambition_dev WITH PASSWORD 'ambition_dev';" -U postgres
-  - psql -c 'CREATE DATABASE ambition_dev;' -U postgres
-  - psql -c 'GRANT ALL PRIVILEGES ON DATABASE ambition_dev TO ambition_dev;' -U postgres
+  - psql -c 'CREATE DATABASE manager_utils;' -U postgres
 script:
   - coverage run --source='manager_utils' --branch manage.py test
   - coverage report --fail-under=100
