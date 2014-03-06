@@ -2,7 +2,6 @@ language: python
 python:
   - '2.7'
 env:
-  - DJANGO=1.4 DB=postgres
   - DJANGO=1.5 DB=postgres
   - DJANGO=1.6.1 DB=postgres
 install:
