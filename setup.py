@@ -23,7 +23,7 @@ setup(
         'git+https://github.com/wesokes/django-query-builder.git@0.5.2',
     ],
     install_requires=[
-        'django>=1.6',
+        'django>=1.5',
     ],
     include_package_data=True,
 )
