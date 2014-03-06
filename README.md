@@ -14,7 +14,7 @@ Django manager utils allows a user to perform various functions not natively sup
 
 
 ## single()<a name="single"></a>
-Assumes that the model only has one element in the table or queryset and returns that value. If the table has more than one or no value, an iexception is raised.
+Assumes that the model only has one element in the table or queryset and returns that value. If the table has more than one or no value, an exception is raised.
 
 **Returns**: The only model object in the queryset.
 
@@ -52,7 +52,7 @@ Performs an update on an object or an insert if the object does not exist.
 **Args**:
 - defaults: These values are set when the object is inserted, but are irrelevant when the object already exists. This field should only be used when values only need to be set during creation.
 - updates: These values are updated when the object is updated. They also override any values provided in the defaults when inserting the object.
-- \*\*kwargs: These values provide the arguments used when checking for the existence of the object. They are used in a similar manner to Django's get_or_create function.
+- \*\*kwargs: These values provide the arguments used when checking for the existence of the object. They are used in a similar manner to Django's get_or_create function and are set in a created object.
 
 **Returns**: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
 
