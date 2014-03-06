@@ -45,6 +45,27 @@ class ManagerUtilsMixin(object):
         Args:
             model_objs: A list of model objects that have been updated.
             fields_to_update: A list of fields to be updated. Only these fields will be updated
+
+        Examples:
+            # Create a couple test models
+            model_obj1 = TestModel.objects.create(int_field=1, float_field=2.0, char_field='Hi')
+            model_obj2 = TestModel.objects.create(int_field=3, float_field=4.0, char_field='Hello')
+
+            # Change their fields and do a bulk update
+            model_obj1.int_field = 10
+            model_obj1.float_field = 20.0
+            model_obj2.int_field = 30
+            model_obj2.float_field = 40.0
+            TestModel.objects.bulk_update([model_obj1, model_obj2], ['int_field', 'float_field'])
+
+            # Reload the models and view their changes
+            model_obj1 = TestModel.objects.get(id=model_obj1.id)
+            print model_obj1.int_field, model_obj1.float_field
+            10, 20.0
+
+            model_obj2 = TestModel.objects.get(id=model_obj2.id)
+            print model_obj2.int_field, model_obj2.float_field
+            10, 20.0
         """
         updated_rows = [
             [model_obj.id] + [getattr(model_obj, field_name) for field_name in fields_to_update]
@@ -69,10 +90,39 @@ class ManagerUtilsMixin(object):
             updates: These values are updated when the object is updated. They also override any
                 values provided in the defaults when inserting the object.
             **kwargs: These values provide the arguments used when checking for the existence of
-                the object.
+                the object.  They are used in a similar manner to Django's get_or_create function.
 
-        Returns:
-            A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
+        Returns: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
+
+        Examples:
+        # Upsert a test model with an int value of 1. Use default values that will be given to it when created
+        model_obj, created = TestModel.objects.upsert(int_field=1, defaults={'float_field': 2.0})
+        print created
+        True
+        print model_obj.int_field, model_obj.float_field
+        1, 2.0
+
+        # Do an upsert on that same model with different default fields. Since it already exists, the defaults
+        # are not used
+        model_obj, created = TestModel.objects.upsert(int_field=1, defaults={'float_field': 3.0})
+        print created
+        False
+        print model_obj.int_field, model_obj.float_field
+        1, 2.0
+
+        # In order to update the float field in an existing object, use the updates dictionary
+        model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 3.0})
+        print created
+        False
+        print model_obj.int_field, model_obj.float_field
+        1, 3.0
+
+        # You can use updates on a newly created object that will also be used as initial values.
+        model_obj, created = TestModel.objects.upsert(int_field=2, updates={'float_field': 4.0})
+        print created
+        True
+        print model_obj.int_field, model_obj.float_field
+        2, 4.0
         """
         obj, created = self.model.objects.get_or_create(defaults=defaults or {}, **kwargs)
 
@@ -87,8 +137,20 @@ class ManagerUtilsMixin(object):
         """
         Get an object or return None if it doesn't exist.
 
-        Returns:
-            A model object if one exists with the query params, None otherwise.
+        Args:
+            **query_params: The query parameters used in the lookup.
+
+        Returns: A model object if one exists with the query params, None otherwise.
+
+        Examples:
+            model_obj = TestModel.objects.get_or_none(int_field=1)
+            print model_obj
+            None
+
+            TestModel.objects.create(int_field=1)
+            model_obj = TestModel.objects.get_or_none(int_field=1)
+            print model_obj.int_field
+            1
         """
         return self.get_queryset().get_or_none(**query_params)
 
@@ -96,6 +158,17 @@ class ManagerUtilsMixin(object):
         """
         Assumes that this model only has one element in the table and returns it. If the table has more
         than one or no value, an exception is raised.
+
+        Returns: The only model object in the queryset.
+
+        Raises: DoesNotExist error when the object does not exist or a MultipleObjectsReturned error when there
+            is more than one object.
+
+        Examples:
+            TestModel.objects.create(int_field=1)
+            model_obj = TestModel.objects.single()
+            print model_obj.int_field
+            1
         """
         return self.get_queryset().single()
 

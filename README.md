@@ -1,64 +1,120 @@
-[![Build Status](https://travis-ci.org/ambitioninc/django-callable-field.png)](https://travis-ci.org/ambitioninc/django-callable-field)
-django-callable-field
+[![Build Status](https://travis-ci.org/ambitioninc/django-manager-utils.png)](https://travis-ci.org/ambitioninc/django-manager-utils)
+django-manager-utils
 =====================
 
-Store callable functions/classes in Django models.
+Additional utilities for Django model managers.
 
 ## A Brief Overview
-The Django callable field app provides a custom field for a Django model that stores a callable function or class. This provides the ability to easily store paths to code in a model field and quickly execute it without having to load it manually.
+Django manager utils allows a user to perform various functions not natively supported by Django's model managers. A function overview is below with links to more in-depth documentation and examples for each function.
+
+- [single](#single): Grabs a single element from table and verifies it is the only element.
+- [get_or_none](#get_or_none): Performs a get on a queryset and returns None if the object does not exist.
+- [upsert](#upsert): Performs an upsert (update or insert) to a model.
+- [bulk_update](#bulk_update): Bulk updates a list of models and the fields that have been updated.
 
 
-## Storing and Calling a Function
-Assume that you have defined the following function that returns the argument that you passed to it:
+## single()<a name="single"></a>
+Assumes that the model only has one element in the table or queryset and returns that value. If the table has more than one or no value, an iexception is raised.
 
-    def ret_arg(arg):
-        return arg
+**Returns**: The only model object in the queryset.
 
-In order to save this callable function to a model, simply do the following:
+**Raises**: DoesNotExist error when the object does not exist or a MultipleObjectsReturned error when there is more than one object.
 
-    from django.db import models
-    from callable_field import CallableField
+**Examples**:
 
-    class CallableModel(models.Model):
-        my_function = CallableField(max_length=128)
+    TestModel.objects.create(int_field=1)
+    model_obj = TestModel.objects.single()
+    print model_obj.int_field
+    1
 
-    model_obj = CallableModel.objects.create(my_function='full_path_to_function.ret_arg')
-    # Call the function from the my_function field and print the results
-    print model_obj.my_function('Hello World')
-    Hello World
+## get_or_none(\*\*query_params)<a name="get_or_none"></a>
+Get an object or return None if it doesn't exist.
 
-You can similarly pass a function variable (instead of a string) to the model constructor:
+**Args**:
+- \*\*query_params: The query parameters used in the lookup.
 
-    model_obj = CallableModel.objects.create(my_function=ret_arg)
-    print model_obj.my_function('Hello World')
-    Hello World
+**Returns**: A model object if one exists with the query params, None otherwise.
 
+**Examples**:
 
-## Storing and Calling a Class
-Similar to the function example, assume that you have defined the following class that returns the argument passes to its constructor:
+    model_obj = TestModel.objects.get_or_none(int_field=1)
+    print model_obj
+    None
 
-    class RetArg(object):
-        def __init__(arg):
-            self.arg = arg
+    TestModel.objects.create(int_field=1)
+    model_obj = TestModel.objects.get_or_none(int_field=1)
+    print model_obj.int_field
+    1
 
-        def ret_arg():
-            return self.arg
+## upsert(defaults=None, updates=None, \*\*kwargs)<a name="upsert"></a>
+Performs an update on an object or an insert if the object does not exist.
 
-Similar to the function example, do the following to save the class:
+**Args**:
+- defaults: These values are set when the object is inserted, but are irrelevant when the object already exists. This field should only be used when values only need to be set during creation.
+- updates: These values are updated when the object is updated. They also override any values provided in the defaults when inserting the object.
+- \*\*kwargs: These values provide the arguments used when checking for the existence of the object. They are used in a similar manner to Django's get_or_create function.
 
-    from django.db import models
-    from callable_field import CallableField
+**Returns**: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
 
-    class CallableModel(models.Model):
-        my_class = CallableField(max_length=128)
+**Examples**:
 
-    model_obj = CallableModel.objects.create(my_class='full_path_to_class.RetArg')
-    # Instantiate the class from the my_class field and print the results
-    print model_obj.my_class('Hello World').ret_arg()
-    Hello World
+    # Upsert a test model with an int value of 1. Use default values that will be given to it when created
+    model_obj, created = TestModel.objects.upsert(int_field=1, defaults={'float_field': 2.0})
+    print created
+    True
+    print model_obj.int_field, model_obj.float_field
+    1, 2.0
 
-You can similarly pass a class variable (instead of a string) to the model constructor:
+    # Do an upsert on that same model with different default fields. Since it already exists, the defaults
+    # are not used
+    model_obj, created = TestModel.objects.upsert(int_field=1, defaults={'float_field': 3.0})
+    print created
+    False
+    print model_obj.int_field, model_obj.float_field
+    1, 2.0
 
-    model_obj = CallableModel.objects.create(my_class=RetArg)
-    print model_obj.my_class('Hello World').ret_arg()
-    Hello World
+    # In order to update the float field in an existing object, use the updates dictionary
+    model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 3.0})
+    print created
+    False
+    print model_obj.int_field, model_obj.float_field
+    1, 3.0
+
+    # You can use updates on a newly created object that will also be used as initial values.
+    model_obj, created = TestModel.objects.upsert(int_field=2, updates={'float_field': 4.0})
+    print created
+    True
+    print model_obj.int_field, model_obj.float_field
+    2, 4.0
+
+## bulk_update(model_objs, fields_to_update)<a name="bulk_update"></a>
+Performs an bulk update on an list of objects. Any fields listed in the fields_to_update array will be updated in the database.
+
+**Args**:
+- model_objs: A list of model objects that are already stored in the database.
+- fields_to_update: A list of fields to update in the models. Only these fields will be updated in the database. The 'id' field is included by default.
+
+**Examples**:
+
+    # Create a couple test models
+    model_obj1 = TestModel.objects.create(int_field=1, float_field=2.0, char_field='Hi')
+    model_obj2 = TestModel.objects.create(int_field=3, float_field=4.0, char_field='Hello')
+
+    # Change their fields and do a bulk update
+    model_obj1.int_field = 10
+    model_obj1.float_field = 20.0
+    model_obj2.int_field = 30
+    model_obj2.float_field = 40.0
+    TestModel.objects.bulk_update([model_obj1, model_obj2], ['int_field', 'float_field'])
+
+    # Reload the models and view their changes
+    model_obj1 = TestModel.objects.get(id=model_obj1.id)
+    print model_obj1.int_field, model_obj1.float_field
+    10, 20.0
+
+    model_obj2 = TestModel.objects.get(id=model_obj2.id)
+    print model_obj2.int_field, model_obj2.float_field
+    10, 20.0
+
+## License
+MIT License (See the LICENSE file included in this repository)
