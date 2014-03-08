@@ -130,7 +130,7 @@ Performs an bulk update on an list of objects. Any fields listed in the fields_t
     print model_obj2.int_field, model_obj2.float_field
     10, 20.0
 
-## post_bulk_opeation(providing_args=['model'])<a name="post_bulk_operation"></a>
+## post_bulk_operation(providing_args=['model'])<a name="post_bulk_operation"></a>
 A signal that is emitted at the end of a bulk operation. The current bulk operations are Django's update and bulk_create methods and this package's bulk_update method. The signal provides the model that was updated.
 
 **Examples**
