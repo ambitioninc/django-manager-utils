@@ -1,1 +1,1 @@
-from .manager_utils import ManagerUtilsMixin, ManagerUtilsManager
+from .manager_utils import ManagerUtilsMixin, ManagerUtilsManager, post_bulk_operation
