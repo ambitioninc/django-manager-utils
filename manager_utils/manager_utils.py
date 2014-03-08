@@ -32,7 +32,7 @@ class ManagerUtilsQuerySet(QuerySet):
         Assumes that this model only has one element in the table and returns it. If the table has more
         than one or no value, an exception is raised.
         """
-        return self.get(id__gte=0)
+        return self.get()
 
     def update(self, **kwargs):
         """
