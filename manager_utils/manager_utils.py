@@ -2,7 +2,12 @@ from itertools import chain
 
 from django.db.models import Manager
 from django.db.models.query import QuerySet
+from django.dispatch import Signal
 from querybuilder.query import Query
+
+
+# A signal that is emitted when any bulk operation occurs
+post_bulk_operation = Signal(providing_args=['model'])
 
 
 class ManagerUtilsQuerySet(QuerySet):
@@ -27,7 +32,15 @@ class ManagerUtilsQuerySet(QuerySet):
         Assumes that this model only has one element in the table and returns it. If the table has more
         than one or no value, an exception is raised.
         """
-        return self.get(id__gte=0)
+        return self.get()
+
+    def update(self, **kwargs):
+        """
+        Overrides Django's update method to emit a post_bulk_operation signal when it completes.
+        """
+        ret_val = super(ManagerUtilsQuerySet, self).update(**kwargs)
+        post_bulk_operation.send(sender=self, model=self.model)
+        return ret_val
 
 
 class ManagerUtilsMixin(object):
@@ -38,6 +51,15 @@ class ManagerUtilsMixin(object):
     def get_queryset(self):
         return ManagerUtilsQuerySet(self.model)
 
+    def bulk_create(self, objs, batch_size=None):
+        """
+        Overrides Django's bulk_create function to emit a post_bulk_operation signal when bulk_create
+        is finished.
+        """
+        ret_val = super(ManagerUtilsMixin, self).bulk_create(objs, batch_size=batch_size)
+        post_bulk_operation.send(sender=self, model=self.model)
+        return ret_val
+
     def bulk_update(self, model_objs, fields_to_update):
         """
         Bulk updates a list of model objects that are already saved.
@@ -45,6 +67,8 @@ class ManagerUtilsMixin(object):
         Args:
             model_objs: A list of model objects that have been updated.
             fields_to_update: A list of fields to be updated. Only these fields will be updated
+
+        Sianals: Emits a post_bulk_operation signal when completed.
 
         Examples:
             # Create a couple test models
@@ -79,6 +103,8 @@ class ManagerUtilsMixin(object):
             table=self.model,
             fields=chain(['id'] + fields_to_update),
         ).update(updated_rows)
+
+        post_bulk_operation.send(sender=self, model=self.model)
 
     def upsert(self, defaults=None, updates=None, **kwargs):
         """
