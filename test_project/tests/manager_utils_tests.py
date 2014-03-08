@@ -94,8 +94,6 @@ class IdDictTest(TestCase):
         model_obj1 = G(TestModel, int_field=1)
         model_obj2 = G(TestModel, int_field=2)
         self.assertEquals(TestModel.objects.id_dict(), {model_obj1.id: model_obj1, model_obj2.id: model_obj2})
-        print (TestModel.objects.id_dict())
-        self.assertEquals(0, 1)
 
     def test_no_objects_queryset(self):
         """
