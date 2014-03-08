@@ -11,5 +11,6 @@ before_script:
   - find . | grep .py$ | grep -v /migrations | grep -v __init__.py | xargs pyflakes
   - psql -c 'CREATE DATABASE manager_utils;' -U postgres
 script:
+  - python setup.py install
   - coverage run --source='manager_utils' --branch manage.py test
   - coverage report --fail-under=100
