@@ -25,7 +25,7 @@ An overview of each util is below with links to more in-depth documentation and 
 - [get_or_none](#get_or_none): Performs a get on a queryset and returns None if the object does not exist.
 - [upsert](#upsert): Performs an upsert (update or insert) to a model.
 - [bulk_update](#bulk_update): Bulk updates a list of models and the fields that have been updated.
-
+- [post_bulk_operation](#post_bulk_operation): A signal that is fired when a bulk operation happens.
 
 ## single()<a name="single"></a>
 Assumes that the model only has one element in the table or queryset and returns that value. If the table has more than one or no value, an exception is raised.
@@ -129,6 +129,21 @@ Performs an bulk update on an list of objects. Any fields listed in the fields_t
     model_obj2 = TestModel.objects.get(id=model_obj2.id)
     print model_obj2.int_field, model_obj2.float_field
     10, 20.0
+
+## post_bulk_operation(providing_args=['model'])<a name="post_bulk_operation"></a>
+A signal that is emitted at the end of a bulk operation. The current bulk operations are Django's update and bulk_create methods and this package's bulk_update method. The signal provides the model that was updated.
+
+**Examples**
+
+    from manager_utils import post_bulk_operation
+
+    def signal_handler(self, *args, **kwargs):
+        print kwargs['model']
+
+    post_bulk_operation.connect(signal_handler)
+
+    TestModel.objects.all().update(int_field=1)
+    <type 'TestModel'>
 
 ## License
 MIT License (See the LICENSE file included in this repository)

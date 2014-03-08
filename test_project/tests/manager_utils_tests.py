@@ -1,7 +1,80 @@
 from django.test import TestCase
 from django_dynamic_fixture import G
+from manager_utils import post_bulk_operation
 
 from test_project.models import TestModel
+
+
+class PostBulkOperationSignalTest(TestCase):
+    """
+    Tests that the post_bulk_operation signal is emitted on all functions that emit the signal.
+    """
+    def setUp(self):
+        """
+        Defines a siangl handler that collects information about fired signals
+        """
+        class SignalHandler(object):
+            num_times_called = 0
+            model = None
+
+            def __call__(self, *args, **kwargs):
+                self.num_times_called += 1
+                self.model = kwargs['model']
+
+        self.signal_handler = SignalHandler()
+        post_bulk_operation.connect(self.signal_handler)
+
+    def tearDown(self):
+        """
+        Disconnect the siangl to make sure it doesn't get connected multiple times.
+        """
+        post_bulk_operation.disconnect(self.signal_handler)
+
+    def test_post_bulk_operation_queryset_update(self):
+        """
+        Tests that the update operation on a queryset emits the post_bulk_operation signal.
+        """
+        TestModel.objects.all().update(int_field=1)
+
+        self.assertEquals(self.signal_handler.model, TestModel)
+        self.assertEquals(self.signal_handler.num_times_called, 1)
+
+    def test_post_bulk_operation_manager_update(self):
+        """
+        Tests that the update operation on a manager emits the post_bulk_operation signal.
+        """
+        TestModel.objects.update(int_field=1)
+
+        self.assertEquals(self.signal_handler.model, TestModel)
+        self.assertEquals(self.signal_handler.num_times_called, 1)
+
+    def test_post_bulk_operation_bulk_update(self):
+        """
+        Tests that the bulk_update operation emits the post_bulk_operation signal.
+        """
+        model_obj = TestModel.objects.create(int_field=2)
+        TestModel.objects.bulk_update([model_obj], ['int_field'])
+
+        self.assertEquals(self.signal_handler.model, TestModel)
+        self.assertEquals(self.signal_handler.num_times_called, 1)
+
+    def test_post_bulk_operation_bulk_create(self):
+        """
+        Tests that the bulk_create operation emits the post_bulk_operation signal.
+        """
+        TestModel.objects.bulk_create([TestModel(int_field=2)])
+
+        self.assertEquals(self.signal_handler.model, TestModel)
+        self.assertEquals(self.signal_handler.num_times_called, 1)
+
+    def test_save_doesnt_emit_signal(self):
+        """
+        Tests that a non-bulk operation doesn't emit the signal.
+        """
+        model_obj = TestModel.objects.create(int_field=2)
+        model_obj.save()
+
+        self.assertEquals(self.signal_handler.num_times_called, 0)
 
 
 class GetOrNoneTests(TestCase):
