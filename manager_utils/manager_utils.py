@@ -14,6 +14,12 @@ class ManagerUtilsQuerySet(QuerySet):
     """
     Defines the methods in the manager utils that can also be applied to querysets.
     """
+    def id_dict(self):
+        """
+        Returns a dictionary of all the objects keyed on their id.
+        """
+        return {obj.id: obj for obj in self}
+
     def get_or_none(self, **query_params):
         """
         Get an object or return None if it doesn't exist.
@@ -50,6 +56,23 @@ class ManagerUtilsMixin(object):
     """
     def get_queryset(self):
         return ManagerUtilsQuerySet(self.model)
+
+    def id_dict(self):
+        """
+        Returns a dictionary of all the objects keyed on their ID.
+
+        Returns:
+            A dictionary of objects from the queryset or manager that is keyed on the objects' IDs.
+
+        Examples:
+
+            TestModel.objects.create(int_field=1)
+            TestModel.objects.create(int_field=2)
+
+            print TestModel.objects.id_dict()
+
+        """
+        return self.get_queryset().id_dict()
 
     def bulk_create(self, objs, batch_size=None):
         """
