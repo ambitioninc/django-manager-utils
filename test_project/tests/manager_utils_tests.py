@@ -77,6 +77,43 @@ class PostBulkOperationSignalTest(TestCase):
         self.assertEquals(self.signal_handler.num_times_called, 0)
 
 
+class IdDictTest(TestCase):
+    """
+    Tests the id_dict function.
+    """
+    def test_no_objects_manager(self):
+        """
+        Tests the output when no objects are present in the manager.
+        """
+        self.assertEquals(TestModel.objects.id_dict(), {})
+
+    def test_objects_manager(self):
+        """
+        Tests retrieving a dict of objects keyed on their ID from the manager.
+        """
+        model_obj1 = G(TestModel, int_field=1)
+        model_obj2 = G(TestModel, int_field=2)
+        self.assertEquals(TestModel.objects.id_dict(), {model_obj1.id: model_obj1, model_obj2.id: model_obj2})
+        print (TestModel.objects.id_dict())
+        self.assertEquals(0, 1)
+
+    def test_no_objects_queryset(self):
+        """
+        Tests the case when no objects are returned via a queryset.
+        """
+        G(TestModel, int_field=1)
+        G(TestModel, int_field=2)
+        self.assertEquals(TestModel.objects.filter(int_field__gte=3).id_dict(), {})
+
+    def test_objects_queryset(self):
+        """
+        Tests the case when objects are returned via a queryset.
+        """
+        G(TestModel, int_field=1)
+        model_obj = G(TestModel, int_field=2)
+        self.assertEquals(TestModel.objects.filter(int_field__gte=2).id_dict(), {model_obj.id: model_obj})
+
+
 class GetOrNoneTests(TestCase):
     """
     Tests the get_or_none function in the manager utils
