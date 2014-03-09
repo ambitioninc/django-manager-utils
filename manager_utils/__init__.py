@@ -1,1 +1,1 @@
-from .manager_utils import ManagerUtilsMixin, ManagerUtilsManager, post_bulk_operation
+from .manager_utils import ManagerUtilsMixin, ManagerUtilsManager, ManagerUtilsQuerySet, post_bulk_operation
