@@ -20,11 +20,11 @@ setup(
         'Framework :: Django',
     ],
     dependency_links=[
-        'http://github.com/wesokes/django-query-builder/tarball/0.5#egg=django-query-builder-0.5.2',
+        'http://github.com/ambitioninc/django-query-builder/tarball/master#egg=django-query-builder-0.5.3',
     ],
     install_requires=[
         'django>=1.6',
-        'django-query-builder>=0.5.2',
+        'django-query-builder>=0.5.3',
     ],
     include_package_data=True,
 )
