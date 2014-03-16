@@ -19,9 +19,6 @@ setup(
         'Operating System :: OS Independent',
         'Framework :: Django',
     ],
-    dependency_links=[
-        'http://github.com/ambitioninc/django-query-builder/tarball/master#egg=django-query-builder-0.5.3',
-    ],
     install_requires=[
         'django>=1.6',
         'django-query-builder>=0.5.3',
