@@ -20,14 +20,14 @@ class ManagerUtilsQuerySet(QuerySet):
         """
         return {obj.id: obj for obj in self}
 
-    def bulk_upsert(self, objs, unique_fields, default_fields=None, update_fields=None):
+    def bulk_upsert(self, objs, unique_fields, update_fields):
         """
         Performs a bulk update or insert on a queryset.
         """
         if not unique_fields:
             raise ValueError('Must provide unique_fields argument')
-        default_fields = default_fields or []
-        update_fields = update_fields or []
+        if not update_fields:
+            raise ValueError('Must provide update_fields argument')
 
         # Create a look up table for all of the objects in the queryset keyed on the unique_fields
         model_obj_dict = {
@@ -39,9 +39,8 @@ class ManagerUtilsQuerySet(QuerySet):
         for obj in objs:
             model_obj = model_obj_dict.get(tuple(obj[field] for field in unique_fields), None)
             if model_obj is None:
-                # If the object needs to be created, make a new instance of it with the default and update fields
-                model_obj = self.model(**{field: obj[field] for field in chain(default_fields, update_fields)})
-                model_objs_to_create.append(model_obj)
+                # If the object needs to be created, make a new instance of it
+                model_objs_to_create.append(self.model(**obj))
             else:
                 # If the object needs to be updated, update its fields
                 for field in update_fields:
@@ -106,7 +105,7 @@ class ManagerUtilsMixin(object):
         """
         return self.get_queryset().id_dict()
 
-    def bulk_upsert(self, objs, unique_fields, default_fields=None, update_fields=None):
+    def bulk_upsert(self, objs, unique_fields, update_fields):
         """
         Performs a bulk update or insert on a list of dictionaries. Matches all objects in the queryset
         with the objs provided using the field values in unique_fields.
@@ -117,14 +116,12 @@ class ManagerUtilsMixin(object):
             objs: A list of dictionaries that have fields corresponding to the model in the manager.
             unique_fields: A list of fields that are used to determine if an object in objs matches a model
                 from the queryset.
-            default_fields: A list of fields used from the objects in objs as default fields when creating
-                new models.
             update_fields: A list of fields used from the objects in objs as fields when updating existing
-                models or creating new ones.
+                models.
 
         Signals: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
         """
-        return self.get_queryset().bulk_upsert(objs, unique_fields, default_fields, update_fields)
+        return self.get_queryset().bulk_upsert(objs, unique_fields, update_fields)
 
     def bulk_create(self, objs, batch_size=None):
         """
