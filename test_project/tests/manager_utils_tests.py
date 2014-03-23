@@ -142,7 +142,7 @@ class BulkUpsertTest(TestCase):
         for i in range(3):
             G(TestModel, int_field=i, char_field='-1', float_field=-1)
 
-        # Update using the int field as a uniqueness constraint. All three objects are created
+        # Update using the int and char field as a uniqueness constraint. All three objects are created
         TestModel.objects.bulk_upsert([
             {'int_field': 0, 'char_field': '0', 'float_field': 0},
             {'int_field': 1, 'char_field': '1', 'float_field': 1},
@@ -162,7 +162,27 @@ class BulkUpsertTest(TestCase):
             self.assertEqual(model_obj.char_field, str(i))
             self.assertAlmostEqual(model_obj.float_field, i)
 
+    def test_some_updates_unique_int_char_field_queryset(self):
+        """
+        Tests the case when some updates were previously stored and a queryset is used on the bulk upsert.
+        """
+        # Create previously stored test models with a unique int field and -1 for all other fields
+        for i in range(3):
+            G(TestModel, int_field=i, char_field='-1', float_field=-1)
 
+        # Update using the int field as a uniqueness constraint on a queryset. Only one object should be updated.
+        TestModel.objects.filter(int_field=0).bulk_upsert([
+            {'int_field': 0, 'char_field': '0', 'float_field': 0},
+            {'int_field': 1, 'char_field': '1', 'float_field': 1},
+            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+        ], ['int_field'], ['float_field'])
+
+        # Verify that two new objecs were inserted
+        self.assertEquals(TestModel.objects.count(), 5)
+        self.assertEquals(TestModel.objects.filter(char_field='-1').count(), 3)
+        for i, model_obj in enumerate(TestModel.objects.filter(char_field='-1').order_by('int_field')):
+            self.assertEqual(model_obj.int_field, i)
+            self.assertEqual(model_obj.char_field, '-1')
 
 
 class PostBulkOperationSignalTest(TestCase):
