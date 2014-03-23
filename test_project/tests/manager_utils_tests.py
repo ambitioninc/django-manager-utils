@@ -9,13 +9,21 @@ class BulkUpsertTest(TestCase):
     """
     Tests the bulk_upsert function.
     """
-    def test_wo_required_arguments(self):
+    def test_wo_unique_fields(self):
         """
-        Tests bulk_upsert with no arguments. A ValueError should be raised since it is required to provide a
+        Tests bulk_upsert with no unique fields. A ValueError should be raised since it is required to provide a
         list of unique_fields.
         """
         with self.assertRaises(ValueError):
-            TestModel.objects.bulk_upsert([], [], [])
+            TestModel.objects.bulk_upsert([], [], ['field'])
+
+    def test_wo_update_fields(self):
+        """
+        Tests bulk_upsert with no update fields. A ValueError should be raised since it is required to provide a
+        list of update_fields.
+        """
+        with self.assertRaises(ValueError):
+            TestModel.objects.bulk_upsert([], ['field'], [])
 
     def test_w_blank_arguments(self):
         """
