@@ -5,6 +5,26 @@ from manager_utils import post_bulk_operation
 from test_project.models import TestModel
 
 
+class BulkUpsertTest(TestCase):
+    """
+    Tests the bulk_upsert function.
+    """
+    def test_wo_required_arguments(self):
+        """
+        Tests bulk_upsert with no arguments. A ValueError should be raised since it is required to provide a
+        list of unique_fields.
+        """
+        with self.assertRaises(ValueError):
+            TestModel.objects.bulk_upsert([], [])
+
+    def test_w_blank_arguments(self):
+        """
+        Tests using required arguments and using blank arguments for everything else.
+        """
+        TestModel.objects.bulk_upsert([], ['field'])
+        self.assertEquals(TestModel.objects.count(), 0)
+
+
 class PostBulkOperationSignalTest(TestCase):
     """
     Tests that the post_bulk_operation signal is emitted on all functions that emit the signal.

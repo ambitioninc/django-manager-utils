@@ -20,17 +20,22 @@ class ManagerUtilsQuerySet(QuerySet):
         """
         return {obj.id: obj for obj in self}
 
-    def bulk_upsert(self, objs, unique_fields, default_fields, update_fields):
+    def bulk_upsert(self, objs, unique_fields, default_fields=None, update_fields=None):
         """
         Performs a bulk update or insert on a queryset.
         """
+        if not unique_fields:
+            raise ValueError('Must provide unique_fields argument')
+        default_fields = default_fields or []
+        update_fields = update_fields or []
+
         # Create a look up table for all of the objects in the queryset keyed on the unique_fields
         model_obj_dict = {
             tuple(getattr(model_obj, field) for field in unique_fields): model_obj for model_obj in self
         }
 
         # Find all of the objects to update and all of the objects to create
-        model_objs_to_update, model_objs_to_create = []
+        model_objs_to_update, model_objs_to_create = [], []
         for obj in objs:
             model_obj = model_obj_dict.get(tuple(obj[field] for field in unique_fields), None)
             if model_obj is None:
@@ -101,7 +106,7 @@ class ManagerUtilsMixin(object):
         """
         return self.get_queryset().id_dict()
 
-    def bulk_upsert(self, objs, unique_fields, default_fields, update_fields):
+    def bulk_upsert(self, objs, unique_fields, default_fields=None, update_fields=None):
         """
         Performs a bulk update or insert on a list of dictionaries. Matches all objects in the queryset
         with the objs provided using the field values in unique_fields.
@@ -186,7 +191,7 @@ class ManagerUtilsMixin(object):
             updates: These values are updated when the object is updated. They also override any
                 values provided in the defaults when inserting the object.
             **kwargs: These values provide the arguments used when checking for the existence of
-                the object.  They are used in a similar manner to Django's get_or_create function.
+                the object. They are used in a similar manner to Django's get_or_create function.
 
         Returns: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
 
