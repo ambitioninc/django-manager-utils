@@ -24,6 +24,7 @@ An overview of each util is below with links to more in-depth documentation and 
 - [single](#single): Grabs a single element from table and verifies it is the only element.
 - [get_or_none](#get_or_none): Performs a get on a queryset and returns None if the object does not exist.
 - [upsert](#upsert): Performs an upsert (update or insert) to a model.
+- [bulk_upsert](#bulk_upsert): Performs a bulk upsert to a list of objects.
 - [bulk_update](#bulk_update): Bulk updates a list of models and the fields that have been updated.
 - [id_dict](#id_dict): Returns a dictionary of objects keyed on their ID.
 - [post_bulk_operation](#post_bulk_operation): A signal that is fired when a bulk operation happens.
@@ -101,6 +102,69 @@ Performs an update on an object or an insert if the object does not exist.
     True
     print model_obj.int_field, model_obj.float_field
     2, 4.0
+
+## bulk_upsert(objs, unique_fields, update_fields)<a name="bulk_upsert"></a>
+Performs a bulk update or insert on a list of dictionaries. Matches all objects in the queryset with the objs provided using the field values in unique_fields. If an existing object is matched, it is updated with the values from the provided objects. Objects that don't match anything are bulk inserted.
+
+**Args**:
+- objs: A list of dictionaries that have fields corresponding to the model in the manager.
+- unique_fields: A list of fields that are used to determine if an object in objs matches a model from the queryset.
+- update_fields: A list of fields used from the objects in objs as fields when updating existing models.
+
+**Signals**: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
+
+**Examples:**
+
+    # Start off with no objects in the database. Call a bulk_upsert on the TestModel, which includes
+    # a char_field, int_field, and float_field
+    TestModel.objects.bulk_upsert([
+        {'float_field': 1.0, 'char_field': '1', 'int_field': 1},
+        {'float_field': 2.0, 'char_field': '2', 'int_field': 2},
+        {'float_field': 3.0, 'char_field': '3', 'int_field': 3},
+    ], ['int_field'], ['char_field'])
+
+    # All objects should have been created
+    print TestModel.objects.count()
+    3
+
+    # Now perform a bulk upsert on all the char_field values. Since the objects existed previously
+    # (known by the int_field uniqueness constraint), the char fields should be updated
+    TestModel.objects.bulk_upsert([
+        {'float_field': 1.0, 'char_field': '0', 'int_field': 1},
+        {'float_field': 2.0, 'char_field': '0', 'int_field': 2},
+        {'float_field': 3.0, 'char_field': '0', 'int_field': 3},
+    ], ['int_field'], ['char_field'])
+
+    # No more new objects should have been created, and every char field should be 0
+    print TestModel.objects.count(), TestModel.objects.filter(char_field='-1').count()
+    3, 3
+
+    # Do the exact same operation, but this time add an additional object that is not already
+    # stored. It will be inserted.
+    TestModel.objects.bulk_upsert([
+        {'float_field': 1.0, 'char_field': '1', 'int_field': 1},
+        {'float_field': 2.0, 'char_field': '2', 'int_field': 2},
+        {'float_field': 3.0, 'char_field': '3', 'int_field': 3},
+        {'float_field': 4.0, 'char_field': '4', 'int_field': 4},
+    ], ['int_field'], ['char_field'])
+
+    # There should be one more object
+    print TestModel.objects.count()
+    4
+
+    # Note that one can also do the upsert on a queryset. Perform the same data upsert on a
+    # filter for int_field=1. In this case, only one object has the ability to be updated.
+    # All of the other objects will be inserted
+    TestModel.objects.filter(int_field=1).bulk_upsert([
+        {'float_field': 1.0, 'char_field': '1', 'int_field': 1},
+        {'float_field': 2.0, 'char_field': '2', 'int_field': 2},
+        {'float_field': 3.0, 'char_field': '3', 'int_field': 3},
+        {'float_field': 4.0, 'char_field': '4', 'int_field': 4},
+    ], ['int_field'], ['char_field'])
+
+    # There should be three more objects
+    print TestModel.objects.count()
+    7
 
 ## bulk_update(model_objs, fields_to_update)<a name="bulk_update"></a>
 Performs an bulk update on an list of objects. Any fields listed in the fields_to_update array will be updated in the database.
