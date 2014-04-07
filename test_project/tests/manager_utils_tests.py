@@ -37,9 +37,9 @@ class BulkUpsertTest(TestCase):
         Tests the case when no updates were previously stored (i.e objects are only created)
         """
         TestModel.objects.bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], ['char_field', 'float_field'])
 
         for i, model_obj in enumerate(TestModel.objects.order_by('int_field')):
@@ -58,9 +58,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int field as a uniqueness constraint
         TestModel.objects.bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], ['char_field', 'float_field'])
 
         # Verify that the fields were updated
@@ -81,9 +81,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int field as a uniqueness constraint
         TestModel.objects.bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], update_fields=['float_field'])
 
         # Verify that the float field was updated
@@ -104,9 +104,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int field as a uniqueness constraint. The first two are updated while the third is created
         TestModel.objects.bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], ['float_field'])
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
@@ -128,9 +128,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int field as a uniqueness constraint. The first two are updated while the third is created
         TestModel.objects.bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field', 'char_field'], ['float_field'])
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
@@ -152,9 +152,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int and char field as a uniqueness constraint. All three objects are created
         TestModel.objects.bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field', 'char_field'], ['float_field'])
 
         # Verify that no updates occured
@@ -180,9 +180,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int field as a uniqueness constraint on a queryset. Only one object should be updated.
         TestModel.objects.filter(int_field=0).bulk_upsert([
-            {'int_field': 0, 'char_field': '0', 'float_field': 0},
-            {'int_field': 1, 'char_field': '1', 'float_field': 1},
-            {'int_field': 2, 'char_field': '2', 'float_field': 2},
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], ['float_field'])
 
         # Verify that two new objecs were inserted

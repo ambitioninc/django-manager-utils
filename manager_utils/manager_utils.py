@@ -20,7 +20,7 @@ class ManagerUtilsQuerySet(QuerySet):
         """
         return {obj.id: obj for obj in self}
 
-    def bulk_upsert(self, objs, unique_fields, update_fields):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields):
         """
         Performs a bulk update or insert on a queryset.
         """
@@ -30,22 +30,23 @@ class ManagerUtilsQuerySet(QuerySet):
             raise ValueError('Must provide update_fields argument')
 
         # Create a look up table for all of the objects in the queryset keyed on the unique_fields
-        model_obj_dict = {
-            tuple(getattr(model_obj, field) for field in unique_fields): model_obj for model_obj in self
+        extant_model_objs = {
+            tuple(getattr(extant_model_obj, field) for field in unique_fields): extant_model_obj
+            for extant_model_obj in self
         }
 
         # Find all of the objects to update and all of the objects to create
         model_objs_to_update, model_objs_to_create = [], []
-        for obj in objs:
-            model_obj = model_obj_dict.get(tuple(obj[field] for field in unique_fields), None)
-            if model_obj is None:
+        for model_obj in model_objs:
+            extant_model_obj = extant_model_objs.get(tuple(getattr(model_obj, field) for field in unique_fields), None)
+            if extant_model_obj is None:
                 # If the object needs to be created, make a new instance of it
-                model_objs_to_create.append(self.model(**obj))
+                model_objs_to_create.append(model_obj)
             else:
                 # If the object needs to be updated, update its fields
                 for field in update_fields:
-                    setattr(model_obj, field, obj[field])
-                model_objs_to_update.append(model_obj)
+                    setattr(extant_model_obj, field, getattr(model_obj, field))
+                model_objs_to_update.append(extant_model_obj)
 
         # Apply bulk updates and creates
         self.model.objects.bulk_update(model_objs_to_update, update_fields)
@@ -104,9 +105,9 @@ class ManagerUtilsMixin(object):
         """
         return self.get_queryset().id_dict()
 
-    def bulk_upsert(self, objs, unique_fields, update_fields):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields):
         """
-        Performs a bulk update or insert on a list of dictionaries. Matches all objects in the queryset
+        Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
         with the objs provided using the field values in unique_fields.
         If an existing object is matched, it is updated with the values from the provided objects. Objects
         that don't match anything are bulk inserted.
@@ -124,9 +125,9 @@ class ManagerUtilsMixin(object):
             # Start off with no objects in the database. Call a bulk_upsert on the TestModel, which includes
             # a char_field, int_field, and float_field
             TestModel.objects.bulk_upsert([
-                {'float_field': 1.0, 'char_field': '1', 'int_field': 1},
-                {'float_field': 2.0, 'char_field': '2', 'int_field': 2},
-                {'float_field': 3.0, 'char_field': '3', 'int_field': 3},
+                TestModel(float_field=1.0, char_field='1', int_field=1),
+                TestModel(float_field=2.0, char_field='2', int_field=2),
+                TestModel(float_field=3.0, char_field='3', int_field=3),
             ], ['int_field'], ['char_field'])
 
             # All objects should have been created
@@ -136,9 +137,9 @@ class ManagerUtilsMixin(object):
             # Now perform a bulk upsert on all the char_field values. Since the objects existed previously
             # (known by the int_field uniqueness constraint), the char fields should be updated
             TestModel.objects.bulk_upsert([
-                {'float_field': 1.0, 'char_field': '0', 'int_field': 1},
-                {'float_field': 2.0, 'char_field': '0', 'int_field': 2},
-                {'float_field': 3.0, 'char_field': '0', 'int_field': 3},
+                TestModel(float_field=1.0, char_field='0', int_field=1),
+                TestModel(float_field=2.0, char_field='0', int_field=2),
+                TestModel(float_field=3.0, char_field='0', int_field=3),
             ], ['int_field'], ['char_field'])
 
             # No more new objects should have been created, and every char field should be 0
@@ -148,10 +149,10 @@ class ManagerUtilsMixin(object):
             # Do the exact same operation, but this time add an additional object that is not already
             # stored. It will be inserted.
             TestModel.objects.bulk_upsert([
-                {'float_field': 1.0, 'char_field': '1', 'int_field': 1},
-                {'float_field': 2.0, 'char_field': '2', 'int_field': 2},
-                {'float_field': 3.0, 'char_field': '3', 'int_field': 3},
-                {'float_field': 4.0, 'char_field': '4', 'int_field': 4},
+                TestModel(float_field=1.0, char_field='1', int_field=1),
+                TestModel(float_field=2.0, char_field='2', int_field=2),
+                TestModel(float_field=3.0, char_field='3', int_field=3),
+                TestModel(float_field=4.0, char_field='4', int_field=4),
             ], ['int_field'], ['char_field'])
 
             # There should be one more object
@@ -162,24 +163,24 @@ class ManagerUtilsMixin(object):
             # filter for int_field=1. In this case, only one object has the ability to be updated.
             # All of the other objects will be inserted
             TestModel.objects.filter(int_field=1).bulk_upsert([
-                {'float_field': 1.0, 'char_field': '1', 'int_field': 1},
-                {'float_field': 2.0, 'char_field': '2', 'int_field': 2},
-                {'float_field': 3.0, 'char_field': '3', 'int_field': 3},
-                {'float_field': 4.0, 'char_field': '4', 'int_field': 4},
+                TestModel(float_field=1.0, char_field='1', int_field=1),
+                TestModel(float_field=2.0, char_field='2', int_field=2),
+                TestModel(float_field=3.0, char_field='3', int_field=3),
+                TestModel(float_field=4.0, char_field='4', int_field=4),
             ], ['int_field'], ['char_field'])
 
             # There should be three more objects
             print TestModel.objects.count()
             7
         """
-        return self.get_queryset().bulk_upsert(objs, unique_fields, update_fields)
+        return self.get_queryset().bulk_upsert(model_objs, unique_fields, update_fields)
 
-    def bulk_create(self, objs, batch_size=None):
+    def bulk_create(self, model_objs, batch_size=None):
         """
         Overrides Django's bulk_create function to emit a post_bulk_operation signal when bulk_create
         is finished.
         """
-        ret_val = super(ManagerUtilsMixin, self).bulk_create(objs, batch_size=batch_size)
+        ret_val = super(ManagerUtilsMixin, self).bulk_create(model_objs, batch_size=batch_size)
         post_bulk_operation.send(sender=self, model=self.model)
         return ret_val
 
