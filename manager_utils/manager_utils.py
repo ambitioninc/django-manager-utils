@@ -274,8 +274,14 @@ class ManagerUtilsMixin(object):
             print model_obj.int_field, model_obj.float_field
             2, 4.0
         """
-        obj, created = self.model.objects.get_or_create(defaults=defaults or {}, **kwargs)
+        defaults = defaults or {}
+        # Override any defaults with updates
+        defaults.update(updates or {})
 
+        # Do a get or create
+        obj, created = self.model.objects.get_or_create(defaults=defaults, **kwargs)
+
+        # Update any necessary fields
         if updates is not None:
             for k, v in updates.iteritems():
                 setattr(obj, k, v)
