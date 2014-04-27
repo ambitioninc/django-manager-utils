@@ -549,7 +549,7 @@ class UpsertTest(TestCase):
         Tests an upsert that results in a created object. Defaults are not used and
         the updates values override the defaults on creation.
         """
-	test_model = G(TestModel)
+        test_model = G(TestModel)
         model_obj, created = TestForeignKeyModel.objects.upsert(int_field=1, updates={
             'test_model': test_model,
         })
