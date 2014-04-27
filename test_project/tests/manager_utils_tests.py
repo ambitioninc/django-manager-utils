@@ -2,7 +2,7 @@ from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 
-from test_project.models import TestModel
+from test_project.models import TestModel, TestForeignKeyModel
 
 
 class BulkUpsertTest(TestCase):
@@ -300,7 +300,7 @@ class IdDictTest(TestCase):
         self.assertEquals(TestModel.objects.filter(int_field__gte=2).id_dict(), {model_obj.id: model_obj})
 
 
-class GetOrNoneTests(TestCase):
+class GetOrNoneTest(TestCase):
     """
     Tests the get_or_none function in the manager utils
     """
@@ -348,7 +348,7 @@ class GetOrNoneTests(TestCase):
         self.assertIsNone(TestModel.objects.filter(id=1).get_or_none(id=1))
 
 
-class SingleTests(TestCase):
+class SingleTest(TestCase):
     """
     Tests the single function in the manager utils.
     """
@@ -408,7 +408,7 @@ class SingleTests(TestCase):
         self.assertEquals(model_obj, TestModel.objects.filter(id=model_obj.id).single())
 
 
-class TestBulkUpdate(TestCase):
+class BulkUpdateTest(TestCase):
     """
     Tests the bulk_update function.
     """
@@ -499,7 +499,7 @@ class TestBulkUpdate(TestCase):
         self.assertEquals(test_obj_2.float_field, 4.0)
 
 
-class TestUpsert(TestCase):
+class UpsertTest(TestCase):
     """
     Tests the upsert method in the manager utils.
     """
@@ -543,6 +543,19 @@ class TestUpsert(TestCase):
         self.assertEquals(model_obj.int_field, 1)
         self.assertEquals(model_obj.float_field, 1.0)
         self.assertEquals(model_obj.char_field, 'Hello')
+
+    def test_upsert_creation_no_defaults_override(self):
+        """
+        Tests an upsert that results in a created object. Defaults are not used and
+        the updates values override the defaults on creation.
+        """
+        test_model = G(TestModel)
+        model_obj, created = TestForeignKeyModel.objects.upsert(int_field=1, updates={
+            'test_model': test_model,
+        })
+        self.assertTrue(created)
+        self.assertEquals(model_obj.int_field, 1)
+        self.assertEquals(model_obj.test_model, test_model)
 
     def test_upsert_creation_defaults_updates_override(self):
         """

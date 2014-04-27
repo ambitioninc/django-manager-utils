@@ -11,3 +11,13 @@ class TestModel(models.Model):
     float_field = models.FloatField(null=True)
 
     objects = ManagerUtilsManager()
+
+
+class TestForeignKeyModel(models.Model):
+    """
+    A test model that has a foreign key.
+    """
+    int_field = models.IntegerField()
+    test_model = models.ForeignKey(TestModel)
+
+    objects = ManagerUtilsManager()
