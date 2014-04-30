@@ -44,14 +44,13 @@ class ManagerUtilsQuerySet(QuerySet):
 
         return upserted_models
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields, return_upserts=False):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
         """
         Performs a bulk update or insert on a queryset.
         """
         if not unique_fields:
             raise ValueError('Must provide unique_fields argument')
-        if not update_fields:
-            raise ValueError('Must provide update_fields argument')
+        update_fields = update_fields or []
 
         # Create a look up table for all of the objects in the queryset keyed on the unique_fields
         extant_model_objs = {
@@ -73,7 +72,8 @@ class ManagerUtilsQuerySet(QuerySet):
                 model_objs_to_update.append(extant_model_obj)
 
         # Apply bulk updates and creates
-        self.model.objects.bulk_update(model_objs_to_update, update_fields)
+        if update_fields:
+            self.model.objects.bulk_update(model_objs_to_update, update_fields)
         self.model.objects.bulk_create(model_objs_to_create)
 
         # Optionally return the bulk upserted values
@@ -133,19 +133,23 @@ class ManagerUtilsMixin(object):
         """
         return self.get_queryset().id_dict()
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields, return_upserts=False):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
         """
         Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
         with the objs provided using the field values in unique_fields.
         If an existing object is matched, it is updated with the values from the provided objects. Objects
         that don't match anything are bulk inserted.
+        A user can provide a list update_fields so that any changed values on those fields will be updated.
+        However, if update_fields is not provided, this function reduces down to performing a bulk_create
+        on any non extant objects.
 
         Args:
             objs: A list of dictionaries that have fields corresponding to the model in the manager.
             unique_fields: A list of fields that are used to determine if an object in objs matches a model
                 from the queryset.
             update_fields: A list of fields used from the objects in objs as fields when updating existing
-                models.
+                models. If None, this function will only perform a bulk create for model_objs that do not
+                currently exist in the database.
             return_upserts: A flag specifying whether to return the upserted values. If True, this performs
                 an additional query to fetch any bulk created values.
 
@@ -203,7 +207,8 @@ class ManagerUtilsMixin(object):
             print TestModel.objects.count()
             7
         """
-        return self.get_queryset().bulk_upsert(model_objs, unique_fields, update_fields, return_upserts=return_upserts)
+        return self.get_queryset().bulk_upsert(
+            model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
 
     def bulk_create(self, model_objs, batch_size=None):
         """

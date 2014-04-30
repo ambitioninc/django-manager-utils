@@ -67,11 +67,20 @@ class BulkUpsertTest(TestCase):
 
     def test_wo_update_fields(self):
         """
-        Tests bulk_upsert with no update fields. A ValueError should be raised since it is required to provide a
-        list of update_fields.
+        Tests bulk_upsert with no update fields. This function in turn should just do a bulk create for any
+        models that do not already exist.
         """
-        with self.assertRaises(ValueError):
-            TestModel.objects.bulk_upsert([], ['field'], [])
+        # Create models that already exist
+        G(TestModel, int_field=1)
+        G(TestModel, int_field=2)
+        # Perform a bulk_upsert with one new model
+        TestModel.objects.bulk_upsert([
+            TestModel(int_field=1), TestModel(int_field=2), TestModel(int_field=3)
+        ], ['int_field'])
+        # Three objects should now exist
+        self.assertEquals(TestModel.objects.count(), 3)
+        for test_model, expected_int_value in zip(TestModel.objects.order_by('int_field'), [1, 2, 3]):
+            self.assertEquals(test_model.int_field, expected_int_value)
 
     def test_w_blank_arguments(self):
         """
