@@ -33,7 +33,7 @@ class ManagerUtilsQuerySet(QuerySet):
         # the created values when there is more than one update field
         if len(unique_fields) == 1:
             unique_field = unique_fields[0]
-            upserted_models.append(
+            upserted_models.extend(
                 self.filter(**{'{0}__in'.format(unique_field): (
                     getattr(model_obj, unique_field) for model_obj in model_objs_created
                 )})
@@ -133,7 +133,7 @@ class ManagerUtilsMixin(object):
         """
         return self.get_queryset().id_dict()
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields, return_upserts=False):
         """
         Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
         with the objs provided using the field values in unique_fields.
@@ -146,6 +146,8 @@ class ManagerUtilsMixin(object):
                 from the queryset.
             update_fields: A list of fields used from the objects in objs as fields when updating existing
                 models.
+            return_upserts: A flag specifying whether to return the upserted values. If True, this performs
+                an additional query to fetch any bulk created values.
 
         Signals: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
 
@@ -201,7 +203,7 @@ class ManagerUtilsMixin(object):
             print TestModel.objects.count()
             7
         """
-        return self.get_queryset().bulk_upsert(model_objs, unique_fields, update_fields)
+        return self.get_queryset().bulk_upsert(model_objs, unique_fields, update_fields, return_upserts=return_upserts)
 
     def bulk_create(self, model_objs, batch_size=None):
         """
