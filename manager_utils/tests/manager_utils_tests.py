@@ -2,13 +2,61 @@ from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 
-from test_project.models import TestModel, TestForeignKeyModel
+from manager_utils.tests.models import TestModel, TestForeignKeyModel
 
 
 class BulkUpsertTest(TestCase):
     """
     Tests the bulk_upsert function.
     """
+    def test_return_upserts_none(self):
+        """
+        Tests the return_upserts flag on bulk upserts when there is no data.
+        """
+        return_values = TestModel.objects.bulk_upsert([], ['float_field'], ['float_field'], return_upserts=True)
+        self.assertEquals(return_values, [])
+
+    def test_return_multi_unique_fields_not_supported(self):
+        """
+        Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
+        """
+        with self.assertRaises(NotImplementedError):
+            TestModel.objects.bulk_upsert([], ['float_field', 'int_field'], ['float_field'], return_upserts=True)
+
+    def test_return_created_values(self):
+        """
+        Tests that values that are created are returned properly when return_upserts is True.
+        """
+        return_values = TestModel.objects.bulk_upsert(
+            [TestModel(int_field=1), TestModel(int_field=3), TestModel(int_field=4)],
+            ['int_field'], ['float_field'], return_upserts=True)
+
+        self.assertEquals(len(return_values), 3)
+        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
+            self.assertEquals(test_model.int_field, expected_int)
+            self.assertIsNotNone(test_model.id)
+        self.assertEquals(TestModel.objects.count(), 3)
+
+    def test_return_created_updated_values(self):
+        """
+        Tests returning values when the items are either updated or created.
+        """
+        # Create an item that will be updated
+        G(TestModel, int_field=2, float_field=1.0)
+        return_values = TestModel.objects.bulk_upsert(
+            [
+                TestModel(int_field=1, float_field=3.0), TestModel(int_field=2.0, float_field=3.0),
+                TestModel(int_field=3, float_field=3.0), TestModel(int_field=4, float_field=3.0)
+            ],
+            ['int_field'], ['float_field'], return_upserts=True)
+
+        self.assertEquals(len(return_values), 4)
+        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
+            self.assertEquals(test_model.int_field, expected_int)
+            self.assertAlmostEquals(test_model.float_field, 3.0)
+            self.assertIsNotNone(test_model.id)
+        self.assertEquals(TestModel.objects.count(), 4)
+
     def test_wo_unique_fields(self):
         """
         Tests bulk_upsert with no unique fields. A ValueError should be raised since it is required to provide a
