@@ -2,7 +2,7 @@ from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 
-from test_project.models import TestModel, TestForeignKeyModel
+from manager_utils.tests.models import TestModel, TestForeignKeyModel
 
 
 class BulkUpsertTest(TestCase):

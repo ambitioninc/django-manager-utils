@@ -20,7 +20,31 @@ class ManagerUtilsQuerySet(QuerySet):
         """
         return {obj.id: obj for obj in self}
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields):
+    def _get_upserts(self, model_objs_updated, model_objs_created, unique_fields):
+        """
+        Given a list of model objects that were updated and model objects that were created,
+        return the list of all model objects upserted. Doing this requires fetching all of
+        the models created with bulk create (since django can't return bulk_create pks)
+        """
+        # The upserted models default to the objects that were updated
+        upserted_models = model_objs_updated
+        # Fetch the objects that were created based on the uniqueness constraint. Note - only support the case
+        # where there is one update field so that we can perform an in query. TODO perform an OR query to gather
+        # the created values when there is more than one update field
+        if len(unique_fields) == 1:
+            unique_field = unique_fields[0]
+            upserted_models.append(
+                self.filter(**{'{0}__in'.format(unique_field): (
+                    getattr(model_obj, unique_field) for model_obj in model_objs_created
+                )})
+            )
+        else:
+            raise NotImplementedError(
+                'bulk_upsert currently doesnt support returning upserts with more than one update field')
+
+        return upserted_models
+
+    def bulk_upsert(self, model_objs, unique_fields, update_fields, return_upserts=False):
         """
         Performs a bulk update or insert on a queryset.
         """
@@ -51,6 +75,10 @@ class ManagerUtilsQuerySet(QuerySet):
         # Apply bulk updates and creates
         self.model.objects.bulk_update(model_objs_to_update, update_fields)
         self.model.objects.bulk_create(model_objs_to_create)
+
+        # Optionally return the bulk upserted values
+        if return_upserts:
+            return self._get_upserts(model_objs_to_update, model_objs_to_create, unique_fields)
 
     def get_or_none(self, **query_params):
         """
