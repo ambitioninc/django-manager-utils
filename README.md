@@ -103,13 +103,14 @@ Performs an update on an object or an insert if the object does not exist.
     print model_obj.int_field, model_obj.float_field
     2, 4.0
 
-## bulk_upsert(model_objs, unique_fields, update_fields)<a name="bulk_upsert"></a>
+## bulk_upsert(model_objs, unique_fields, update_fields, return_upserts=False)<a name="bulk_upsert"></a>
 Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset with the objs provided using the field values in unique_fields. If an existing object is matched, it is updated with the values from the provided objects. Objects that don't match anything are bulk inserted.
 
 **Args**:
 - objs: A list of dictionaries that have fields corresponding to the model in the manager.
 - unique_fields: A list of fields that are used to determine if an object in objs matches a model from the queryset.
 - update_fields: A list of fields used from the objects in objs as fields when updating existing models.
+- return_upserts: A flag to return upserted values. Incurs an additional DB read to fetch any bulk created values.
 
 **Signals**: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
 
