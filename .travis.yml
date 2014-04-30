@@ -2,13 +2,15 @@ language: python
 python:
   - '2.7'
 env:
-  - DJANGO=1.6.1 DB=postgres
+  global:
+    - DB=postgres
+  matrix:
+    - DJANGO=1.6.2
 install:
-  - pip install -q coverage pep8 pyflakes Django==$DJANGO
+  - pip install -q coverage flake8 Django==$DJANGO
 before_script:
-  - find . | grep .py$ | grep -v /migrations | xargs pep8 --max-line-length=120
-  - find . | grep .py$ | grep -v /migrations | grep -v __init__.py | xargs pyflakes
+  - flake8 . --max-line-length=120 --max-complexity=10 --exclude='env,migrations,*.egg'
   - psql -c 'CREATE DATABASE manager_utils;' -U postgres
 script:
-  - coverage run --source='manager_utils' --branch  --omit='manager_utils/migrations/*' setup.py test
+  - coverage run --source='manager_utils' --branch --omit='manager_utils/migrations/*' setup.py test
   - coverage report --fail-under=100 --show-missing
