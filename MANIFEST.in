@@ -1,3 +1,2 @@
-include manager_utils/VERSION
 include README.md
 include LICENSE
