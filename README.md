@@ -4,7 +4,7 @@ django-manager-utils
 
 Additional utilities for Django model managers.
 
-## A Brief Overview
+# A Brief Overview
 Django manager utils allows a user to perform various functions not natively supported by Django's model managers. To use the manager in your Django models, do:
 
     from manager_utils import ManagerUtilsManager
@@ -225,5 +225,15 @@ A signal that is emitted at the end of a bulk operation. The current bulk operat
     TestModel.objects.all().update(int_field=1)
     <type 'TestModel'>
 
-## License
+# Calling Manager Utils as Standalone Functions
+All of the main manager utils functions listed can also be called as standalone functions so that third-party managers can take advantage of them. For example:
+
+```python
+from manager_utils import bulk_update
+
+
+bulk_update(TestModel.objects, [model_obj1, model_obj2], ['int_field', 'float_field'])
+```
+
+# License
 MIT License (See the LICENSE file included in this repository)
