@@ -52,6 +52,27 @@ def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields
     return upserted_models
 
 
+def _get_model_objs_to_update_and_create(model_objs, unique_fields, update_fields, extant_model_objs):
+    """
+    Used by bulk_upsert to gather lists of models that should be updated and created.
+    """
+
+    # Find all of the objects to update and all of the objects to create
+    model_objs_to_update, model_objs_to_create = list(), list()
+    for model_obj in model_objs:
+        extant_model_obj = extant_model_objs.get(tuple(getattr(model_obj, field) for field in unique_fields), None)
+        if extant_model_obj is None:
+            # If the object needs to be created, make a new instance of it
+            model_objs_to_create.append(model_obj)
+        else:
+            # If the object needs to be updated, update its fields
+            for field in update_fields:
+                setattr(extant_model_obj, field, getattr(model_obj, field))
+            model_objs_to_update.append(extant_model_obj)
+
+    return model_objs_to_update, model_objs_to_create
+
+
 def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
@@ -140,23 +161,15 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     }
 
     # Find all of the objects to update and all of the objects to create
-    model_objs_to_update, model_objs_to_create = set(), set()
-    for model_obj in model_objs:
-        extant_model_obj = extant_model_objs.get(tuple(getattr(model_obj, field) for field in unique_fields), None)
-        if extant_model_obj is None:
-            # If the object needs to be created, make a new instance of it
-            model_objs_to_create.append(model_obj)
-        else:
-            # If the object needs to be updated, update its fields
-            for field in update_fields:
-                setattr(extant_model_obj, field, getattr(model_obj, field))
-            model_objs_to_update.append(extant_model_obj)
+    model_objs_to_update, model_objs_to_create = _get_model_objs_to_update_and_create(
+        model_objs, unique_fields, update_fields, extant_model_objs)
 
     # Find all objects in the queryset that will not be updated. These will be deleted if the sync option is
     # True
     if sync:
+        model_objs_to_update_set = frozenset(model_objs_to_update)
         model_objs_to_delete = [
-            model_obj.id for model_obj in extant_model_objs.itervalues() if model_obj not in model_objs_to_update
+            model_obj.id for model_obj in extant_model_objs.itervalues() if model_obj not in model_objs_to_update_set
         ]
         if model_objs_to_delete:
             queryset.filter(id__in=model_objs_to_delete).delete()
