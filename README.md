@@ -26,6 +26,7 @@ An overview of each util is below with links to more in-depth documentation and 
 - [upsert](#upsert): Performs an upsert (update or insert) to a model.
 - [bulk_upsert](#bulk_upsert): Performs a bulk upsert to a list of objects.
 - [bulk_update](#bulk_update): Bulk updates a list of models and the fields that have been updated.
+- [sync](#sync): Syncs a list of models to a queryset.
 - [id_dict](#id_dict): Returns a dictionary of objects keyed on their ID.
 - [post_bulk_operation](#post_bulk_operation): A signal that is fired when a bulk operation happens.
 
@@ -195,6 +196,40 @@ Performs an bulk update on an list of objects. Any fields listed in the fields_t
     model_obj2 = TestModel.objects.get(id=model_obj2.id)
     print model_obj2.int_field, model_obj2.float_field
     10, 20.0
+
+## sync(model_objs, unique_fields, update_fields=None)<a name="sync"></a>
+Performs a sync operation on a list of model objects. Matches all objects in the queryset with the objs provided using the field values in unique_fields. If an existing object is matched, it is updated with the values from the provided objects. Objects that don't match anything are bulk inserted. Objects in the queryset that are not in the model_objs are deleted.
+
+**Args**:
+- objs: A list of dictionaries that have fields corresponding to the model in the manager.
+- unique_fields: A list of fields that are used to determine if an object in objs matches a model from the queryset.
+- update_fields: A list of fields used from the objects in objs as fields when updating existing models.
+
+**Signals**: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
+
+**Examples:**
+
+    # Start off with no objects in the database. Call a sync on the TestModel, which includes
+    # a char_field, int_field, and float_field
+    TestModel.objects.sync([
+        TestModel(float_field=1.0, char_field='1', int_field=1),
+        TestModel(float_field=2.0, char_field='2', int_field=2),
+        TestModel(float_field=3.0, char_field='3', int_field=3),
+    ], ['int_field'], ['char_field'])
+
+    # All objects should have been created
+    print TestModel.objects.count()
+    3
+
+    # Now perform a sync on the same queryset with only two of the previous models
+    TestModel.objects.sync([
+        TestModel(float_field=2.0, char_field='2', int_field=2),
+        TestModel(float_field=3.0, char_field='3', int_field=3),
+    ], ['int_field'], ['char_field'])
+
+    # There should only be two models now
+    print TestModel.objects.count()
+    2
 
 ## id_dict()<a name="id_dict"></a>
 Returns a dictionary of the model objects keyed on their ID.

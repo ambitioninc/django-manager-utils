@@ -5,6 +5,102 @@ from manager_utils import post_bulk_operation
 from manager_utils.tests.models import TestModel, TestForeignKeyModel
 
 
+class SyncTest(TestCase):
+    """
+    Tests the sync function.
+    """
+    def test_no_existing_objs(self):
+        """
+        Tests when there are no existing objects before the sync.
+        """
+        TestModel.objects.sync(
+            [TestModel(int_field=1), TestModel(int_field=3), TestModel(int_field=4)], ['int_field'], ['float_field'])
+        self.assertEquals(TestModel.objects.count(), 3)
+        self.assertTrue(TestModel.objects.filter(int_field=1).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=3).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=4).exists())
+
+    def test_existing_objs_all_deleted(self):
+        """
+        Tests when there are existing objects that will all be deleted.
+        """
+        extant_obj1 = G(TestModel, int_field=1)
+        extant_obj2 = G(TestModel, int_field=2)
+        extant_obj3 = G(TestModel, int_field=3)
+
+        TestModel.objects.sync(
+            [TestModel(int_field=4), TestModel(int_field=5), TestModel(int_field=6)], ['int_field'], ['float_field'])
+
+        self.assertEquals(TestModel.objects.count(), 3)
+        self.assertTrue(TestModel.objects.filter(int_field=4).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=5).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=6).exists())
+
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj1.id)
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj2.id)
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj3.id)
+
+    def test_existing_objs_some_deleted(self):
+        """
+        Tests when some existing objects will be deleted.
+        """
+        extant_obj1 = G(TestModel, int_field=1, float_field=1)
+        extant_obj2 = G(TestModel, int_field=2, float_field=1)
+        extant_obj3 = G(TestModel, int_field=3, float_field=1)
+
+        TestModel.objects.sync([
+            TestModel(int_field=3, float_field=2), TestModel(int_field=4, float_field=2),
+            TestModel(int_field=5, float_field=2)
+        ], ['int_field'], ['float_field'])
+
+        self.assertEquals(TestModel.objects.count(), 3)
+        self.assertTrue(TestModel.objects.filter(int_field=3).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=4).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=5).exists())
+
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj1.id)
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj2.id)
+        test_model = TestModel.objects.get(id=extant_obj3.id)
+        self.assertEquals(test_model.int_field, 3)
+
+    def test_existing_objs_some_deleted_w_queryset(self):
+        """
+        Tests when some existing objects will be deleted on a queryset
+        """
+        extant_obj0 = G(TestModel, int_field=0, float_field=1)
+        extant_obj1 = G(TestModel, int_field=1, float_field=1)
+        extant_obj2 = G(TestModel, int_field=2, float_field=1)
+        extant_obj3 = G(TestModel, int_field=3, float_field=1)
+        extant_obj4 = G(TestModel, int_field=4, float_field=0)
+
+        TestModel.objects.filter(int_field__lt=4).sync([
+            TestModel(int_field=1, float_field=2), TestModel(int_field=2, float_field=2),
+            TestModel(int_field=3, float_field=2)
+        ], ['int_field'], ['float_field'])
+
+        self.assertEquals(TestModel.objects.count(), 4)
+        self.assertTrue(TestModel.objects.filter(int_field=1).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=2).exists())
+        self.assertTrue(TestModel.objects.filter(int_field=3).exists())
+
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj0.id)
+
+        test_model = TestModel.objects.get(id=extant_obj1.id)
+        self.assertEquals(test_model.float_field, 2)
+        test_model = TestModel.objects.get(id=extant_obj2.id)
+        self.assertEquals(test_model.float_field, 2)
+        test_model = TestModel.objects.get(id=extant_obj3.id)
+        self.assertEquals(test_model.float_field, 2)
+        test_model = TestModel.objects.get(id=extant_obj4.id)
+        self.assertEquals(test_model.float_field, 0)
+
+
 class BulkUpsertTest(TestCase):
     """
     Tests the bulk_upsert function.
@@ -474,6 +570,54 @@ class BulkUpdateTest(TestCase):
         Tests when no values are provided to bulk update.
         """
         TestModel.objects.bulk_update([], [])
+
+    def test_update_floats_to_null(self):
+        """
+        Tests updating a float field to a null field.
+        """
+        test_obj_1 = G(TestModel, int_field=1, float_field=2)
+        test_obj_2 = G(TestModel, int_field=2, float_field=3)
+        test_obj_1.float_field = None
+        test_obj_2.float_field = None
+
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], ['float_field'])
+
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertIsNone(test_obj_1.float_field)
+        self.assertIsNone(test_obj_2.float_field)
+
+    def test_update_ints_to_null(self):
+        """
+        Tests updating an int field to a null field.
+        """
+        test_obj_1 = G(TestModel, int_field=1, float_field=2)
+        test_obj_2 = G(TestModel, int_field=2, float_field=3)
+        test_obj_1.int_field = None
+        test_obj_2.int_field = None
+
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], ['int_field'])
+
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertIsNone(test_obj_1.int_field)
+        self.assertIsNone(test_obj_2.int_field)
+
+    def test_update_chars_to_null(self):
+        """
+        Tests updating a char field to a null field.
+        """
+        test_obj_1 = G(TestModel, int_field=1, char_field='2')
+        test_obj_2 = G(TestModel, int_field=2, char_field='3')
+        test_obj_1.char_field = None
+        test_obj_2.char_field = None
+
+        TestModel.objects.bulk_update([test_obj_1, test_obj_2], ['char_field'])
+
+        test_obj_1 = TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = TestModel.objects.get(id=test_obj_2.id)
+        self.assertIsNone(test_obj_1.char_field)
+        self.assertIsNone(test_obj_2.char_field)
 
     def test_objs_no_fields_to_update(self):
         """
