@@ -52,7 +52,7 @@ def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields
     return upserted_models
 
 
-def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False):
+def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -71,6 +71,9 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
             currently exist in the database.
         return_upserts: A flag specifying whether to return the upserted values. If True, this performs
             an additional query to fetch any bulk created values.
+        sync: A flag specifying whether a sync operation should be applied to the bulk_upsert. If this
+            is True, all values in the queryset that were not updated will be deleted such that the
+            entire list of model objects is synced to the queryset.
 
     Signals: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
 
@@ -137,7 +140,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     }
 
     # Find all of the objects to update and all of the objects to create
-    model_objs_to_update, model_objs_to_create = [], []
+    model_objs_to_update, model_objs_to_create = set(), set()
     for model_obj in model_objs:
         extant_model_obj = extant_model_objs.get(tuple(getattr(model_obj, field) for field in unique_fields), None)
         if extant_model_obj is None:
@@ -149,6 +152,15 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
                 setattr(extant_model_obj, field, getattr(model_obj, field))
             model_objs_to_update.append(extant_model_obj)
 
+    # Find all objects in the queryset that will not be updated. These will be deleted if the sync option is
+    # True
+    if sync:
+        model_objs_to_delete = [
+            model_obj.id for model_obj in extant_model_objs.itervalues() if model_obj not in model_objs_to_update
+        ]
+        if model_objs_to_delete:
+            queryset.filter(id__in=model_objs_to_delete).delete()
+
     # Apply bulk updates and creates
     if update_fields:
         queryset.model.objects.bulk_update(model_objs_to_update, update_fields)
@@ -157,6 +169,14 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     # Optionally return the bulk upserted values
     if return_upserts:
         return _get_upserts(queryset, model_objs_to_update, model_objs_to_create, unique_fields)
+
+
+def sync(queryset, model_objs, unique_fields, update_fields=None):
+    """
+    Performs a sync operation on a queryset, making the contents of the queryset match the contents of model_objs.
+    This function calls bulk_upsert underneath the hood with sync=True.
+    """
+    return bulk_upsert(queryset, model_objs, unique_fields, update_fields=update_fields, sync=True)
 
 
 def get_or_none(queryset, **query_params):
@@ -321,6 +341,9 @@ class ManagerUtilsQuerySet(QuerySet):
     def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
         return bulk_upsert(self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
 
+    def sync(self, model_objs, unique_fields, update_fields=None):
+        return sync(self, model_objs, unique_fields, update_fields=update_fields)
+
     def get_or_none(self, **query_params):
         return get_or_none(self, **query_params)
 
@@ -350,6 +373,9 @@ class ManagerUtilsMixin(object):
     def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
         return bulk_upsert(
             self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
+
+    def sync(self, model_objs, unique_fields, update_fields=None):
+        return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)
 
     def bulk_create(self, model_objs, batch_size=None):
         """
