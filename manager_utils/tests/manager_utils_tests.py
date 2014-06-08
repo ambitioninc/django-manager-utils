@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
+from mock import patch
 
 from manager_utils.tests.models import TestModel, TestForeignKeyModel
 
@@ -704,6 +705,34 @@ class UpsertTest(TestCase):
     """
     Tests the upsert method in the manager utils.
     """
+    @patch.object(TestModel, 'save', spec_set=True)
+    def test_no_double_save_on_create(self, mock_save):
+        """
+        Tests that save isn't called on upsert after the object has been created.
+        """
+        model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
+        self.assertEquals(mock_save.call_count, 1)
+
+    def test_save_on_update(self):
+        """
+        Tests that save is called when the model is updated
+        """
+        model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
+
+        with patch.object(TestModel, 'save', spec_set=True) as mock_save:
+            TestModel.objects.upsert(int_field=1, updates={'float_field': 1.1})
+            self.assertEquals(mock_save.call_count, 1)
+
+    def test_no_save_on_no_update(self):
+        """
+        Tests that save is not called on upsert if the model is not actually updated.
+        """
+        model_obj, created = TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
+
+        with patch.object(TestModel, 'save', spec_set=True) as mock_save:
+            TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
+            self.assertEquals(mock_save.call_count, 0)
+
     def test_upsert_creation_no_defaults(self):
         """
         Tests an upsert that results in a created object. Don't use defaults
