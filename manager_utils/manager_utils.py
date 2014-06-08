@@ -336,7 +336,7 @@ def upsert(manager, defaults=None, updates=None, **kwargs):
     obj, created = manager.model.objects.get_or_create(defaults=defaults, **kwargs)
 
     # Update any necessary fields
-    if updates is not None:
+    if updates is not None and not created:
         for k, v in updates.iteritems():
             setattr(obj, k, v)
         obj.save(update_fields=updates)
