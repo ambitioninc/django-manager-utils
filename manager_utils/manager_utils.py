@@ -31,7 +31,7 @@ def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields
     """
     Given a list of model objects that were updated and model objects that were created,
     return the list of all model objects upserted. Doing this requires fetching all of
-    the models created with bulk create (since django can't return bulk_create pks)
+    the models created with bulk create (since django can't return bulk_create pks).
     """
     # The upserted models default to the objects that were updated
     upserted_models = model_objs_updated
