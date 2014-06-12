@@ -44,6 +44,24 @@ class SyncTest(TestCase):
         with self.assertRaises(TestModel.DoesNotExist):
             TestModel.objects.get(id=extant_obj3.id)
 
+    def test_existing_objs_all_deleted_empty_sync(self):
+        """
+        Tests when there are existing objects deleted because of an emtpy sync.
+        """
+        extant_obj1 = G(TestModel, int_field=1)
+        extant_obj2 = G(TestModel, int_field=2)
+        extant_obj3 = G(TestModel, int_field=3)
+
+        TestModel.objects.sync([], ['int_field'], ['float_field'])
+
+        self.assertEquals(TestModel.objects.count(), 0)
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj1.id)
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj2.id)
+        with self.assertRaises(TestModel.DoesNotExist):
+            TestModel.objects.get(id=extant_obj3.id)
+
     def test_existing_objs_some_deleted(self):
         """
         Tests when some existing objects will be deleted.

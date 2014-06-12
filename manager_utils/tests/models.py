@@ -6,7 +6,7 @@ class TestModel(models.Model):
     """
     A model for testing manager utils.
     """
-    int_field = models.IntegerField()
+    int_field = models.IntegerField(null=True)
     char_field = models.CharField(max_length=128, null=True)
     float_field = models.FloatField(null=True)
 

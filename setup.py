@@ -35,7 +35,7 @@ setup(
     ],
     install_requires=[
         'django>=1.6',
-        'django-query-builder>=0.5.3',
+        'django-query-builder>=0.5.6',
     ],
     tests_require=[
         'mock',
