@@ -52,7 +52,23 @@ def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields
     return upserted_models
 
 
-def _get_model_objs_to_update_and_create(model_objs, unique_fields, update_fields, extant_model_objs):
+def _remove_dups(model_objs, unique_fields):
+    '''
+        Given the model objects and unique field, returns only the unique objects.
+        In case of duplicates, the object that appear last will be kept.
+    '''
+    if len(unique_fields) > 1:
+        raise NotImplementedError(
+            'bulk_upsert currently doesnt support drop duplicates with more than one unique field')
+
+    unique_field = unique_fields[0]
+    uniq_objects = {}
+    for obj in model_objs:
+        uniq_objects.update({str(getattr(obj, unique_field)): obj})
+    return uniq_objects.values()
+
+
+def _get_model_objs_to_update_and_create(model_objs, unique_fields, update_fields, extant_model_objs, drop_dups):
     """
     Used by bulk_upsert to gather lists of models that should be updated and created.
     """
@@ -70,10 +86,13 @@ def _get_model_objs_to_update_and_create(model_objs, unique_fields, update_field
                 setattr(extant_model_obj, field, getattr(model_obj, field))
             model_objs_to_update.append(extant_model_obj)
 
+    if drop_dups:
+        model_objs_to_create = _remove_dups(model_objs_to_create, unique_fields)
+
     return model_objs_to_update, model_objs_to_create
 
 
-def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False):
+def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False, drop_duplicates=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -162,7 +181,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
 
     # Find all of the objects to update and all of the objects to create
     model_objs_to_update, model_objs_to_create = _get_model_objs_to_update_and_create(
-        model_objs, unique_fields, update_fields, extant_model_objs)
+        model_objs, unique_fields, update_fields, extant_model_objs, drop_duplicates)
 
     # Find all objects in the queryset that will not be updated. These will be deleted if the sync option is
     # True
@@ -351,8 +370,8 @@ class ManagerUtilsQuerySet(QuerySet):
     def id_dict(self):
         return id_dict(self)
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
-        return bulk_upsert(self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
+    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False, drop_duplicates=False):
+        return bulk_upsert(self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, drop_duplicates=drop_duplicates)
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self, model_objs, unique_fields, update_fields=update_fields)
@@ -383,9 +402,9 @@ class ManagerUtilsMixin(object):
     def id_dict(self):
         return id_dict(self.get_queryset())
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False, drop_duplicates=False):
         return bulk_upsert(
-            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
+            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, drop_duplicates=drop_duplicates)
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)

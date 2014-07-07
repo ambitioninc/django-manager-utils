@@ -364,6 +364,28 @@ class BulkUpsertTest(TestCase):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
 
+    def test_bulk_upsert_remove_duplicates_while_creating_objects(self):
+        """
+            Tests the case when some objects that needs to be created are having duplicates.
+        """
+        TestModel.objects.bulk_upsert([
+            TestModel(int_field=0, char_field='0', float_field=0),
+            TestModel(int_field=1, char_field='1', float_field=1),
+            TestModel(int_field=1, char_field='1', float_field=1),
+        ], ['int_field'], ['float_field'], drop_duplicates=True)
+        self.assertEqual(TestModel.objects.count(), 2, "Count mismatch.")
+
+    def test_bulk_upsert_raises_not_implemented_with_drop_duplicates(self):
+        """
+            Tests the case when some objects that needs to be created are having duplicates.
+        """
+        with self.assertRaises(NotImplementedError):
+            TestModel.objects.bulk_upsert([
+                TestModel(int_field=0, char_field='0', float_field=0),
+                TestModel(int_field=1, char_field='1', float_field=1),
+                TestModel(int_field=1, char_field='1', float_field=1),
+            ], ['int_field', 'char_field'], ['float_field'], drop_duplicates=True)
+
 
 class PostBulkOperationSignalTest(TestCase):
     """
@@ -873,3 +895,4 @@ class UpsertTest(TestCase):
         self.assertEquals(model_obj.int_field, 1)
         self.assertEquals(model_obj.float_field, 2.0)
         self.assertEquals(model_obj.char_field, 'Hello')
+
