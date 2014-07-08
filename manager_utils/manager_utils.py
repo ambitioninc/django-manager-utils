@@ -92,7 +92,8 @@ def _get_model_objs_to_update_and_create(model_objs, unique_fields, update_field
     return model_objs_to_update, model_objs_to_create
 
 
-def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False, drop_duplicates=False):
+def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False,
+                drop_duplicates=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -371,7 +372,8 @@ class ManagerUtilsQuerySet(QuerySet):
         return id_dict(self)
 
     def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False, drop_duplicates=False):
-        return bulk_upsert(self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, drop_duplicates=drop_duplicates)
+        return bulk_upsert(self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts,
+                           drop_duplicates=drop_duplicates)
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self, model_objs, unique_fields, update_fields=update_fields)
@@ -404,7 +406,8 @@ class ManagerUtilsMixin(object):
 
     def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False, drop_duplicates=False):
         return bulk_upsert(
-            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, drop_duplicates=drop_duplicates)
+            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts,
+            drop_duplicates=drop_duplicates)
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)

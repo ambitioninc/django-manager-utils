@@ -895,4 +895,3 @@ class UpsertTest(TestCase):
         self.assertEquals(model_obj.int_field, 1)
         self.assertEquals(model_obj.float_field, 2.0)
         self.assertEquals(model_obj.char_field, 'Hello')
-
