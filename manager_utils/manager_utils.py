@@ -207,7 +207,7 @@ def sync(queryset, model_objs, unique_fields, update_fields=None):
 
     This function calls bulk_upsert underneath the hood with sync=True.
 
-    :type model_objs: list of :class:`Models <django:django.db.Models>`
+    :type model_objs: list of :class:`Models<django:django.db.models.Model>`
     :param model_objs: The models to sync
 
     :type update_fields: list of str
