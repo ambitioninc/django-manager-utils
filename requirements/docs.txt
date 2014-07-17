@@ -1,0 +1,4 @@
+Sphinx>=1.2.2
+sphinx_rtd_theme
+psycopg2>=2.4.5
+django>=1.6

@@ -14,14 +14,18 @@ def id_dict(queryset):
     """
     Returns a dictionary of all the objects keyed on their ID.
 
-    Returns:
-        A dictionary of objects from the queryset or manager that is keyed on the objects' IDs.
+    :rtype: dict
+    :returns: A dictionary of objects from the queryset or manager that is keyed
+            on the objects' IDs.
 
     Examples:
+
+    .. code-block:: python
+
         TestModel.objects.create(int_field=1)
         TestModel.objects.create(int_field=2)
 
-        print id_dict(TestModel.objects.all())
+        print(id_dict(TestModel.objects.all()))
 
     """
     return {obj.id: obj for obj in queryset}
@@ -83,22 +87,33 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     However, if update_fields is not provided, this function reduces down to performing a bulk_create
     on any non extant objects.
 
-    Args:
-        objs: A list of dictionaries that have fields corresponding to the model in the manager.
-        unique_fields: A list of fields that are used to determine if an object in objs matches a model
+    :type model_objs: list of dict
+    :param model_objs: A list of dictionaries that have fields corresponding to the model in the manager.
+
+    :type unique_fields: list of str
+    :param unique_fields: A list of fields that are used to determine if an object in objs matches a model
             from the queryset.
-        update_fields: A list of fields used from the objects in objs as fields when updating existing
+
+    :type update_fields: list of str
+    :param update_fields: A list of fields used from the objects in objs as fields when updating existing
             models. If None, this function will only perform a bulk create for model_objs that do not
             currently exist in the database.
-        return_upserts: A flag specifying whether to return the upserted values. If True, this performs
+
+    :type return_upserts: bool
+    :param return_upserts: A flag specifying whether to return the upserted values. If True, this performs
             an additional query to fetch any bulk created values.
-        sync: A flag specifying whether a sync operation should be applied to the bulk_upsert. If this
+
+    :type sync: bool
+    :param sync: A flag specifying whether a sync operation should be applied to the bulk_upsert. If this
             is True, all values in the queryset that were not updated will be deleted such that the
             entire list of model objects is synced to the queryset.
 
-    Signals: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
+    :signals: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
 
     Examples:
+
+    .. code-block:: python
+
         # Start off with no objects in the database. Call a bulk_upsert on the TestModel, which includes
         # a char_field, int_field, and float_field
         bulk_upsert(TestModel.objects.all(), [
@@ -108,7 +123,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
         ], ['int_field'], ['char_field'])
 
         # All objects should have been created
-        print TestModel.objects.count()
+        print(TestModel.objects.count())
         3
 
         # Now perform a bulk upsert on all the char_field values. Since the objects existed previously
@@ -120,7 +135,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
         ], ['int_field'], ['char_field'])
 
         # No more new objects should have been created, and every char field should be 0
-        print TestModel.objects.count(), TestModel.objects.filter(char_field='-1').count()
+        print(TestModel.objects.count(), TestModel.objects.filter(char_field='-1').count())
         3, 3
 
         # Do the exact same operation, but this time add an additional object that is not already
@@ -133,7 +148,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
         ], ['int_field'], ['char_field'])
 
         # There should be one more object
-        print TestModel.objects.count()
+        print(TestModel.objects.count())
         4
 
         # Note that one can also do the upsert on a queryset. Perform the same data upsert on a
@@ -147,8 +162,9 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
         ], ['int_field'], ['char_field'])
 
         # There should be three more objects
-        print TestModel.objects.count()
+        print(TestModel.objects.count())
         7
+
     """
     if not unique_fields:
         raise ValueError('Must provide unique_fields argument')
@@ -169,7 +185,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     if sync:
         model_objs_to_update_set = frozenset(model_objs_to_update)
         model_objs_to_delete = [
-            model_obj.id for model_obj in extant_model_objs.itervalues() if model_obj not in model_objs_to_update_set
+            model_obj.id for model_obj in extant_model_objs.values() if model_obj not in model_objs_to_update_set
         ]
         if model_objs_to_delete:
             queryset.filter(id__in=model_objs_to_delete).delete()
@@ -186,8 +202,23 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
 
 def sync(queryset, model_objs, unique_fields, update_fields=None):
     """
-    Performs a sync operation on a queryset, making the contents of the queryset match the contents of model_objs.
+    Performs a sync operation on a queryset, making the contents of the
+    queryset match the contents of model_objs.
+
     This function calls bulk_upsert underneath the hood with sync=True.
+
+    :type model_objs: list of :class:`Models <django:django.db.Models>`
+    :param model_objs: The models to sync
+
+    :type update_fields: list of str
+    :param unique_fields: A list of fields that are used to determine if an
+            object in objs matches a model from the queryset.
+
+    :type update_fields: list of str
+    :param update_fields: A list of fields used from the objects in objs as fields when updating existing
+            models. If None, this function will only perform a bulk create for model_objs that do not
+            currently exist in the database.
+
     """
     return bulk_upsert(queryset, model_objs, unique_fields, update_fields=update_fields, sync=True)
 
@@ -196,20 +227,23 @@ def get_or_none(queryset, **query_params):
     """
     Get an object or return None if it doesn't exist.
 
-    Args:
-        **query_params: The query parameters used in the lookup.
+    :param \*\*query_params: The query parameters used in the lookup.
 
-    Returns: A model object if one exists with the query params, None otherwise.
+    :returns: A model object if one exists with the query params, None otherwise.
 
     Examples:
+
+    .. code-block:: python
+
         model_obj = get_or_none(TestModel.objects, int_field=1)
-        print model_obj
+        print(model_obj)
         None
 
         TestModel.objects.create(int_field=1)
         model_obj = get_or_none(TestModel.objects, int_field=1)
-        print model_obj.int_field
+        print(model_obj.int_field)
         1
+
     """
     try:
         obj = queryset.get(**query_params)
@@ -220,19 +254,25 @@ def get_or_none(queryset, **query_params):
 
 def single(queryset):
     """
-    Assumes that this model only has one element in the table and returns it. If the table has more
-    than one or no value, an exception is raised.
+    Assumes that this model only has one element in the table and returns it.
+    If the table has more than one or no value, an exception is raised.
 
-    Returns: The only model object in the queryset.
+    :returns: The only model object in the queryset.
 
-    Raises: DoesNotExist error when the object does not exist or a MultipleObjectsReturned error when there
-        is more than one object.
+    :raises: :class:`DoesNotExist <django:django.core.exceptions.ObjectDoesNotExist>`
+            error when the object does not exist or a
+            :class:`MultipleObjectsReturned <django:django.core.exceptions.MultipleObjectsReturned>`
+            error when thereis more than one object.
 
     Examples:
+
+    .. code-block:: python
+
         TestModel.objects.create(int_field=1)
         model_obj = single(TestModel.objects)
-        print model_obj.int_field
+        print(model_obj.int_field)
         1
+
     """
     return queryset.get()
 
@@ -241,13 +281,17 @@ def bulk_update(manager, model_objs, fields_to_update):
     """
     Bulk updates a list of model objects that are already saved.
 
-    Args:
-        model_objs: A list of model objects that have been updated.
+    :type model_objs: list of :class:`Models<django:django.db.models.Model>`
+    :param model_objs: A list of model objects that have been updated.
         fields_to_update: A list of fields to be updated. Only these fields will be updated
 
-    Sianals: Emits a post_bulk_operation signal when completed.
+
+    :signals: Emits a post_bulk_operation signal when completed.
 
     Examples:
+
+    .. code-block:: python
+
         # Create a couple test models
         model_obj1 = TestModel.objects.create(int_field=1, float_field=2.0, char_field='Hi')
         model_obj2 = TestModel.objects.create(int_field=3, float_field=4.0, char_field='Hello')
@@ -261,12 +305,13 @@ def bulk_update(manager, model_objs, fields_to_update):
 
         # Reload the models and view their changes
         model_obj1 = TestModel.objects.get(id=model_obj1.id)
-        print model_obj1.int_field, model_obj1.float_field
+        print(model_obj1.int_field, model_obj1.float_field)
         10, 20.0
 
         model_obj2 = TestModel.objects.get(id=model_obj2.id)
-        print model_obj2.int_field, model_obj2.float_field
+        print(model_obj2.int_field, model_obj2.float_field)
         10, 20.0
+
     """
     updated_rows = [
         [model_obj.id] + [getattr(model_obj, field_name) for field_name in fields_to_update]
@@ -287,46 +332,54 @@ def bulk_update(manager, model_objs, fields_to_update):
 def upsert(manager, defaults=None, updates=None, **kwargs):
     """
     Performs an update on an object or an insert if the object does not exist.
-    Args:
-        defaults: These values are set when the object is inserted, but are irrelevant
+
+    :type defaults: dict
+    :param defaults: These values are set when the object is inserted, but are irrelevant
             when the object already exists. This field should only be used when values only need to
             be set during creation.
-        updates: These values are updated when the object is updated. They also override any
+
+    :type updates: dict
+    :param updates: These values are updated when the object is updated. They also override any
             values provided in the defaults when inserting the object.
-        **kwargs: These values provide the arguments used when checking for the existence of
+
+    :param \*\*kwargs: These values provide the arguments used when checking for the existence of
             the object. They are used in a similar manner to Django's get_or_create function.
 
-    Returns: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
+    :returns: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)
 
     Examples:
+
+    .. code-block:: python
+
         # Upsert a test model with an int value of 1. Use default values that will be given to it when created
         model_obj, created = upsert(TestModel.objects, int_field=1, defaults={'float_field': 2.0})
-        print created
+        print(created)
         True
-        print model_obj.int_field, model_obj.float_field
+        print(model_obj.int_field, model_obj.float_field)
         1, 2.0
 
         # Do an upsert on that same model with different default fields. Since it already exists, the defaults
         # are not used
         model_obj, created = upsert(TestModel.objects, int_field=1, defaults={'float_field': 3.0})
-        print created
+        print(created)
         False
-        print model_obj.int_field, model_obj.float_field
+        print(model_obj.int_field, model_obj.float_field)
         1, 2.0
 
         # In order to update the float field in an existing object, use the updates dictionary
         model_obj, created = upsert(TestModel.objects, int_field=1, updates={'float_field': 3.0})
-        print created
+        print(created)
         False
-        print model_obj.int_field, model_obj.float_field
+        print(model_obj.int_field, model_obj.float_field)
         1, 3.0
 
         # You can use updates on a newly created object that will also be used as initial values.
         model_obj, created = upsert(TestModel.objects, int_field=2, updates={'float_field': 4.0})
-        print created
+        print(created)
         True
-        print model_obj.int_field, model_obj.float_field
+        print(model_obj.int_field, model_obj.float_field)
         2, 4.0
+
     """
     defaults = defaults or {}
     # Override any defaults with updates
@@ -337,7 +390,7 @@ def upsert(manager, defaults=None, updates=None, **kwargs):
 
     # Update any necessary fields
     if updates is not None and not created and any(getattr(obj, k) != updates[k] for k in updates):
-        for k, v in updates.iteritems():
+        for k, v in updates.items():
             setattr(obj, k, v)
         obj.save(update_fields=updates)
 
