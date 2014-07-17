@@ -2,7 +2,7 @@
 branch = True
 omit =
     manager_utils/version.py
-source = {{ project_name }}
+source = manager_utils
 [report]
 exclude_lines =
     # Have to re-enable the standard pragma
