@@ -8,15 +8,15 @@ involves big changes, please file a ticket before making a pull request! We
 want to make sure you don't spend your time coding something that might not fit
 the scope of the project.
 
-.. _ambitioninc repository: https://github.com/ambitioninc/django-query-builder/issues
+.. _ambitioninc repository: https://github.com/ambitioninc/django-manager-utils/issues
 
 Running the tests
 -----------------
 
 To get the source source code and run the unit tests, run::
 
-    $ git clone git://github.com/ambitioninc/django-query-builder.git
-    $ cd django-query-builder
+    $ git clone git://github.com/ambitioninc/django-manager-utils.git
+    $ cd django-manager-utils
     $ virtualenv env
     $ . env/bin/activate
     $ python setup.py install
@@ -61,7 +61,7 @@ Building the docs
 When in the project directory::
 
     $ pip install -r requirements/docs.txt
-    $ pip uninstall -y django-query-builder && python setup.py install
+    $ pip uninstall -y django-manager-utils && python setup.py install
     $ cd docs && make html
     $ open docs/_build/html/index.html
 
