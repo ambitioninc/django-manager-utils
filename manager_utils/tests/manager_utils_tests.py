@@ -3,13 +3,38 @@ from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 from mock import patch
 
-from manager_utils.tests.models import TestModel, TestForeignKeyModel
+from manager_utils.tests.models import TestModel, TestForeignKeyModel, TestPkForeignKey, TestPkChar
 
 
 class SyncTest(TestCase):
     """
     Tests the sync function.
     """
+    def test_w_char_pk(self):
+        """
+        Tests with a model that has a char pk.
+        """
+        extant_obj1 = G(TestPkChar, my_key='1', char_field='1')
+        extant_obj2 = G(TestPkChar, my_key='2', char_field='1')
+        extant_obj3 = G(TestPkChar, my_key='3', char_field='1')
+
+        TestPkChar.objects.sync([
+            TestPkChar(my_key='3', char_field='2'), TestPkChar(my_key='4', char_field='2'),
+            TestPkChar(my_key='5', char_field='2')
+        ], ['my_key'], ['char_field'])
+
+        self.assertEquals(TestPkChar.objects.count(), 3)
+        self.assertTrue(TestPkChar.objects.filter(my_key='3').exists())
+        self.assertTrue(TestPkChar.objects.filter(my_key='4').exists())
+        self.assertTrue(TestPkChar.objects.filter(my_key='5').exists())
+
+        with self.assertRaises(TestPkChar.DoesNotExist):
+            TestPkChar.objects.get(pk=extant_obj1.pk)
+        with self.assertRaises(TestPkChar.DoesNotExist):
+            TestPkChar.objects.get(pk=extant_obj2.pk)
+        test_model = TestPkChar.objects.get(pk=extant_obj3.pk)
+        self.assertEquals(test_model.char_field, '2')
+
     def test_no_existing_objs(self):
         """
         Tests when there are no existing objects before the sync.
@@ -584,6 +609,37 @@ class BulkUpdateTest(TestCase):
     """
     Tests the bulk_update function.
     """
+    def test_foreign_key_pk_using_id(self):
+        """
+        Tests a bulk update on a model that has a primary key to a foreign key. It uses the id of the pk in the
+        update
+        """
+        t = G(TestPkForeignKey, char_field='hi')
+        TestPkForeignKey.objects.bulk_update(
+            [TestPkForeignKey(my_key_id=t.my_key_id, char_field='hello')], ['char_field'])
+        self.assertEquals(TestPkForeignKey.objects.count(), 1)
+        self.assertTrue(TestPkForeignKey.objects.filter(char_field='hello', my_key=t.my_key).exists())
+
+    def test_foreign_key_pk(self):
+        """
+        Tests a bulk update on a model that has a primary key to a foreign key. It uses the foreign key itself
+        in the update
+        """
+        t = G(TestPkForeignKey, char_field='hi')
+        TestPkForeignKey.objects.bulk_update([TestPkForeignKey(my_key=t.my_key, char_field='hello')], ['char_field'])
+        self.assertEquals(TestPkForeignKey.objects.count(), 1)
+        self.assertTrue(TestPkForeignKey.objects.filter(char_field='hello', my_key=t.my_key).exists())
+
+    def test_char_pk(self):
+        """
+        Tests a bulk update on a model that has a primary key to a char field.
+        """
+        G(TestPkChar, char_field='hi', my_key='1')
+        TestPkChar.objects.bulk_update(
+            [TestPkChar(my_key='1', char_field='hello')], ['char_field'])
+        self.assertEquals(TestPkChar.objects.count(), 1)
+        self.assertTrue(TestPkChar.objects.filter(char_field='hello', my_key='1').exists())
+
     def test_none(self):
         """
         Tests when no values are provided to bulk update.
