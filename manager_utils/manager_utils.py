@@ -185,7 +185,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     if sync:
         model_objs_to_update_set = frozenset(model_objs_to_update)
         model_objs_to_delete = [
-            model_obj.pk for model_obj in extant_model_objs.itervalues() if model_obj not in model_objs_to_update_set
+            model_obj.pk for model_obj in extant_model_objs.values() if model_obj not in model_objs_to_update_set
         ]
         if model_objs_to_delete:
             queryset.filter(pk__in=model_objs_to_delete).delete()
