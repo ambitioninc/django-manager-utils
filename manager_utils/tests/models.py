@@ -21,3 +21,23 @@ class TestForeignKeyModel(models.Model):
     test_model = models.ForeignKey(TestModel)
 
     objects = ManagerUtilsManager()
+
+
+class TestPkForeignKey(models.Model):
+    """
+    A test model with a primary key thats a foreign key to another model.
+    """
+    my_key = models.ForeignKey(TestModel, primary_key=True)
+    char_field = models.CharField(max_length=128, null=True)
+
+    objects = ManagerUtilsManager()
+
+
+class TestPkChar(models.Model):
+    """
+    A test model with a primary key that is a char field.
+    """
+    my_key = models.CharField(max_length=128, primary_key=True)
+    char_field = models.CharField(max_length=128, null=True)
+
+    objects = ManagerUtilsManager()

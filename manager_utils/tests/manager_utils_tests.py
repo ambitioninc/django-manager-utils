@@ -3,7 +3,7 @@ from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 from mock import patch
 
-from manager_utils.tests.models import TestModel, TestForeignKeyModel
+from manager_utils.tests.models import TestModel, TestForeignKeyModel, TestPkForeignKey, TestPkChar
 
 
 class SyncTest(TestCase):
@@ -584,6 +584,37 @@ class BulkUpdateTest(TestCase):
     """
     Tests the bulk_update function.
     """
+    def test_foreign_key_pk_using_id(self):
+        """
+        Tests a bulk update on a model that has a primary key to a foreign key. It uses the id of the pk in the
+        update
+        """
+        t = G(TestPkForeignKey, char_field='hi')
+        TestPkForeignKey.objects.bulk_update(
+            [TestPkForeignKey(my_key_id=t.my_key_id, char_field='hello')], ['char_field'])
+        self.assertEquals(TestPkForeignKey.objects.count(), 1)
+        self.assertTrue(TestPkForeignKey.objects.filter(char_field='hello', my_key=t.my_key).exists())
+
+    def test_foreign_key_pk(self):
+        """
+        Tests a bulk update on a model that has a primary key to a foreign key. It uses the foreign key itself
+        in the update
+        """
+        t = G(TestPkForeignKey, char_field='hi')
+        TestPkForeignKey.objects.bulk_update([TestPkForeignKey(my_key=t.my_key, char_field='hello')], ['char_field'])
+        self.assertEquals(TestPkForeignKey.objects.count(), 1)
+        self.assertTrue(TestPkForeignKey.objects.filter(char_field='hello', my_key=t.my_key).exists())
+
+    def test_char_pk(self):
+        """
+        Tests a bulk update on a model that has a primary key to a char field.
+        """
+        G(TestPkChar, char_field='hi', my_key='1')
+        TestPkChar.objects.bulk_update(
+            [TestPkChar(my_key='1', char_field='hello')], ['char_field'])
+        self.assertEquals(TestPkChar.objects.count(), 1)
+        self.assertTrue(TestPkChar.objects.filter(char_field='hello', my_key='1').exists())
+
     def test_none(self):
         """
         Tests when no values are provided to bulk update.
