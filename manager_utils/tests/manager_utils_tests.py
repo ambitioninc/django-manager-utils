@@ -10,6 +10,31 @@ class SyncTest(TestCase):
     """
     Tests the sync function.
     """
+    def test_w_char_pk(self):
+        """
+        Tests with a model that has a char pk.
+        """
+        extant_obj1 = G(TestPkChar, my_key='1', char_field='1')
+        extant_obj2 = G(TestPkChar, my_key='2', char_field='1')
+        extant_obj3 = G(TestPkChar, my_key='3', char_field='1')
+
+        TestPkChar.objects.sync([
+            TestPkChar(my_key='3', char_field='2'), TestPkChar(my_key='4', char_field='2'),
+            TestPkChar(my_key='5', char_field='2')
+        ], ['my_key'], ['char_field'])
+
+        self.assertEquals(TestPkChar.objects.count(), 3)
+        self.assertTrue(TestPkChar.objects.filter(my_key='3').exists())
+        self.assertTrue(TestPkChar.objects.filter(my_key='4').exists())
+        self.assertTrue(TestPkChar.objects.filter(my_key='5').exists())
+
+        with self.assertRaises(TestPkChar.DoesNotExist):
+            TestPkChar.objects.get(pk=extant_obj1.pk)
+        with self.assertRaises(TestPkChar.DoesNotExist):
+            TestPkChar.objects.get(pk=extant_obj2.pk)
+        test_model = TestPkChar.objects.get(pk=extant_obj3.pk)
+        self.assertEquals(test_model.char_field, '2')
+
     def test_no_existing_objs(self):
         """
         Tests when there are no existing objects before the sync.
