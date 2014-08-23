@@ -28,7 +28,7 @@ def id_dict(queryset):
         print(id_dict(TestModel.objects.all()))
 
     """
-    return {obj.id: obj for obj in queryset}
+    return {obj.pk: obj for obj in queryset}
 
 
 def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields):
@@ -185,10 +185,10 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     if sync:
         model_objs_to_update_set = frozenset(model_objs_to_update)
         model_objs_to_delete = [
-            model_obj.id for model_obj in extant_model_objs.values() if model_obj not in model_objs_to_update_set
+            model_obj.pk for model_obj in extant_model_objs.values() if model_obj not in model_objs_to_update_set
         ]
         if model_objs_to_delete:
-            queryset.filter(id__in=model_objs_to_delete).delete()
+            queryset.filter(pk__in=model_objs_to_delete).delete()
 
     # Apply bulk updates and creates
     if update_fields:
@@ -314,7 +314,7 @@ def bulk_update(manager, model_objs, fields_to_update):
 
     """
     updated_rows = [
-        [model_obj.id] + [getattr(model_obj, field_name) for field_name in fields_to_update]
+        [model_obj.pk] + [getattr(model_obj, field_name) for field_name in fields_to_update]
         for model_obj in model_objs
     ]
     if len(updated_rows) == 0 or len(fields_to_update) == 0:
@@ -323,7 +323,7 @@ def bulk_update(manager, model_objs, fields_to_update):
     # Execute the bulk update
     Query().from_table(
         table=manager.model,
-        fields=chain(['id'] + fields_to_update),
+        fields=chain([manager.model._meta.pk.attname] + fields_to_update),
     ).update(updated_rows)
 
     post_bulk_operation.send(sender=manager, model=manager.model)
