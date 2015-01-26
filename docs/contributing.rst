@@ -61,8 +61,7 @@ Building the docs
 When in the project directory::
 
     $ pip install -r requirements/docs.txt
-    $ pip uninstall -y django-manager-utils && python setup.py install
-    $ cd docs && make html
+    $ python setup.py build_sphinx
     $ open docs/_build/html/index.html
 
 Release Checklist
@@ -71,9 +70,15 @@ Release Checklist
 Before a new release, please go through the following checklist:
 
 * Bump version in manager_utils/version.py
-* Git tag the version
 * Add a release note in docs/release_notes.rst
-* Upload to pypi
+* Git tag the version
+* Upload to pypi::
+
+    pip install wheel
+    python setup.py sdist bdist_wheel upload
+
+* Increment the version to ``x.x.(x+1)dev``
+
 
 Vulnerability Reporting
 -----------------------

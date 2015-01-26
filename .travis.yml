@@ -7,12 +7,14 @@ env:
   global:
     - DB=postgres
   matrix:
-    - DJANGO=1.6.5
+    - DJANGO=1.6.10
 install:
   - pip install -q coverage flake8 Django==$DJANGO
+  - pip install -r requirements/docs.txt
 before_script:
   - psql -c 'CREATE DATABASE manager_utils;' -U postgres
 script:
   - flake8 .
   - coverage run setup.py test
   - coverage report --fail-under=100
+  - python setup.py build_sphinx

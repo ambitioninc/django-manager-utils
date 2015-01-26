@@ -40,6 +40,7 @@ setup(
         'django-query-builder>=0.5.6',
     ],
     tests_require=[
+        'coverage',
         'mock',
         'psycopg2',
         'django-nose',
