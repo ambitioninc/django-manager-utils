@@ -1,6 +1,14 @@
 .. image:: https://travis-ci.org/ambitioninc/django-manager-utils.png
    :target: https://travis-ci.org/ambitioninc/django-manager-utils
 
+.. image:: https://pypip.in/v/django-manager-utils/badge.png
+    :target: https://pypi.python.org/pypi/django-manager-utils/
+    :alt: Latest PyPI version
+
+.. image:: https://pypip.in/d/django-manager-utils/badge.png
+    :target: https://pypi.python.org/pypi/django-manager-utils/
+    :alt: Number of PyPI downloads
+
 django-manager-utils
 ====================
 Additional utilities for Django model managers.
