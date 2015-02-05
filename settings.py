@@ -34,6 +34,7 @@ def configure_settings():
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
         settings.configure(
+            MIDDLEWARE_CLASSES={},
             DATABASES={
                 'default': db_config,
                 },
