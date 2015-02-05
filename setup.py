@@ -43,7 +43,7 @@ setup(
         'coverage',
         'mock',
         'psycopg2',
-        'django-nose',
+        'django-nose>=1.3.4',
         'south',
         'django-dynamic-fixture',
     ],
