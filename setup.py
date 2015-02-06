@@ -36,14 +36,14 @@ setup(
         'Framework :: Django',
     ],
     install_requires=[
-        'django>=1.6,<1.7',
-        'django-query-builder>=0.5.6',
+        'django>=1.6',
+        'django-query-builder>=0.6.1',
     ],
     tests_require=[
         'coverage',
         'mock',
         'psycopg2',
-        'django-nose',
+        'django-nose>=1.3',
         'south',
         'django-dynamic-fixture',
     ],
