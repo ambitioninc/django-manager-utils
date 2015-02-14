@@ -193,7 +193,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
     # Apply bulk updates and creates
     if update_fields:
         bulk_update(queryset.model.objects, model_objs_to_update, update_fields)
-    queryset.model.objects.bulk_create(model_objs_to_create)
+    queryset.bulk_create(model_objs_to_create)
 
     # Optionally return the bulk upserted values
     if return_upserts:
