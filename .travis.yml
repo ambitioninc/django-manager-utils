@@ -18,4 +18,5 @@ script:
   - flake8 .
   - coverage run setup.py test
   - coverage report --fail-under=100
+  - python setup.py install
   - python setup.py build_sphinx
