@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v0.7.1
+------
+
+* Added multiple database support for ``bulk_upsert``
+
 v0.6.4
 ------
 
