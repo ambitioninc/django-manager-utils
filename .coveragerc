@@ -2,6 +2,7 @@
 branch = True
 omit =
     manager_utils/version.py
+    manager_utils/apps.py
 source = manager_utils
 [report]
 exclude_lines =

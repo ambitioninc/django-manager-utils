@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v0.7.2
+------
+
+* Added Django 1.7 app config
+
 v0.7.1
 ------
 
