@@ -37,7 +37,7 @@ def configure_settings():
             MIDDLEWARE_CLASSES={},
             DATABASES={
                 'default': db_config,
-                },
+            },
             INSTALLED_APPS=(
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
