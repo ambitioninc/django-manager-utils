@@ -5,4 +5,4 @@ from .manager_utils import (
     upsert, bulk_update, single, get_or_none, bulk_upsert, id_dict, sync
 )
 
-django_app_config = 'manager_utils.apps.ManagerUtilsConfig'
+default_app_config = 'manager_utils.apps.ManagerUtilsConfig'
