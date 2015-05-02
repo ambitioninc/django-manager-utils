@@ -17,10 +17,6 @@ from django_nose import NoseTestSuiteRunner
 
 
 def run_tests(*test_args, **kwargs):
-    if 'south' in settings.INSTALLED_APPS:
-        from south.management.commands import patch_for_test_db_setup
-        patch_for_test_db_setup()
-
     if not test_args:
         test_args = ['manager_utils']
 
