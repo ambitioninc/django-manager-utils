@@ -326,7 +326,7 @@ def bulk_update(manager, model_objs, fields_to_update):
         fields=chain([manager.model._meta.pk.attname] + fields_to_update),
     ).update(updated_rows)
 
-    post_bulk_operation.send(sender=manager, model=manager.model)
+    post_bulk_operation.send(sender=manager.model, model=manager.model)
 
 
 def upsert(manager, defaults=None, updates=None, **kwargs):
