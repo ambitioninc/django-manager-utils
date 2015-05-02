@@ -449,7 +449,7 @@ class ManagerUtilsMixin(object):
         is finished.
         """
         ret_val = super(ManagerUtilsMixin, self).bulk_create(*args, **kwargs)
-        post_bulk_operation.send(sender=self, model=self.model)
+        post_bulk_operation.send(sender=self.model, model=self.model)
         return ret_val
 
     def bulk_update(self, model_objs, fields_to_update):
