@@ -421,7 +421,7 @@ class ManagerUtilsQuerySet(QuerySet):
         Overrides Django's update method to emit a post_bulk_operation signal when it completes.
         """
         ret_val = super(ManagerUtilsQuerySet, self).update(**kwargs)
-        post_bulk_operation.send(sender=self, model=self.model)
+        post_bulk_operation.send(sender=self.model, model=self.model)
         return ret_val
 
 
