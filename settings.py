@@ -1,6 +1,5 @@
 import os
 
-import django
 from django.conf import settings
 
 
@@ -34,6 +33,8 @@ def configure_settings():
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
         settings.configure(
+            TEST_RUNNER='django_nose.NoseTestSuiteRunner',
+            NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
             MIDDLEWARE_CLASSES={},
             DATABASES={
                 'default': db_config,
@@ -45,7 +46,7 @@ def configure_settings():
                 'django.contrib.admin',
                 'manager_utils',
                 'manager_utils.tests',
-            ) + (('south',) if django.VERSION[1] == 6 else ()),
+            ),
             ROOT_URLCONF='manager_utils.urls',
             DEBUG=False,
         )
