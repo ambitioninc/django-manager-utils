@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+v0.8.4
+------
+
+* Fixed a bug when doing bulk updates on foreign key ID fields in Django 1.7
+
+v0.8.3
+------
+
+* Added support for doing bulk updates on custom django fields
+
 v0.8.0
 ------
 

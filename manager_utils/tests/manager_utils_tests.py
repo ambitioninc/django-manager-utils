@@ -1,10 +1,18 @@
 from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
+from manager_utils.manager_utils import _get_prepped_model_field
 from mock import patch
 from pytz import timezone
 
 from manager_utils.tests import models
+
+
+class TestGetPreppedModelField(TestCase):
+    def test_invalid_field(self):
+        t = models.TestModel()
+        with self.assertRaises(AttributeError):
+            _get_prepped_model_field(t, 'non_extant_field')
 
 
 class SyncTest(TestCase):
@@ -650,6 +658,13 @@ class BulkUpdateTest(TestCase):
     """
     Tests the bulk_update function.
     """
+    def test_update_foreign_key_by_id(self):
+        t_model = G(models.TestModel)
+        t_fk_model = G(models.TestForeignKeyModel)
+        t_fk_model.test_model = t_model
+        models.TestForeignKeyModel.objects.bulk_update([t_fk_model], ['test_model_id'])
+        self.assertEqual(models.TestForeignKeyModel.objects.get().test_model, t_model)
+
     def test_foreign_key_pk_using_id(self):
         """
         Tests a bulk update on a model that has a primary key to a foreign key. It uses the id of the pk in the
