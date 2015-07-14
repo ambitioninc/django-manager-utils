@@ -77,6 +77,13 @@ def _get_model_objs_to_update_and_create(model_objs, unique_fields, update_field
     return model_objs_to_update, model_objs_to_create
 
 
+def _get_prepped_model_field(model_obj, field):
+    """
+    Gets the value of a field of a model obj that is prepared for the db.
+    """
+    return model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field))
+
+
 def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
@@ -314,7 +321,7 @@ def bulk_update(manager, model_objs, fields_to_update):
 
     """
     updated_rows = [
-        [model_obj.pk] + [getattr(model_obj, field_name) for field_name in fields_to_update]
+        [model_obj.pk] + [_get_prepped_model_field(model_obj, field_name) for field_name in fields_to_update]
         for model_obj in model_objs
     ]
     if len(updated_rows) == 0 or len(fields_to_update) == 0:

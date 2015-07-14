@@ -45,6 +45,8 @@ setup(
         'psycopg2',
         'django-nose>=1.3',
         'django-dynamic-fixture',
+        'pytz',
+        'django-timezone-field',
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,
