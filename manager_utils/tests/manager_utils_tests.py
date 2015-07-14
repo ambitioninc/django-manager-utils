@@ -1,10 +1,18 @@
 from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
+from manager_utils.manager_utils import _get_prepped_model_field
 from mock import patch
 from pytz import timezone
 
 from manager_utils.tests import models
+
+
+class TestGetPreppedModelField(TestCase):
+    def test_invalid_field(self):
+        t = models.TestModel()
+        with self.assertRaises(AttributeError):
+            _get_prepped_model_field(t, 'non_extant_field')
 
 
 class SyncTest(TestCase):
