@@ -2,6 +2,7 @@ from django.test import TestCase
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 from mock import patch
+from pytz import timezone
 
 from manager_utils.tests import models
 
@@ -417,6 +418,13 @@ class PostBulkOperationSignalTest(TestCase):
         Disconnect the siangl to make sure it doesn't get connected multiple times.
         """
         post_bulk_operation.disconnect(self.signal_handler)
+
+    def test_custom_field_bulk_update(self):
+        model_obj = models.TestModel.objects.create(int_field=2)
+        model_obj.time_zone = timezone('US/Eastern')
+        models.TestModel.objects.bulk_update([model_obj], ['time_zone'])
+        model_obj = models.TestModel.objects.get(id=model_obj.id)
+        self.assertEquals(model_obj.time_zone, timezone('US/Eastern'))
 
     def test_post_bulk_operation_queryset_update(self):
         """
