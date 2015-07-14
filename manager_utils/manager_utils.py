@@ -81,7 +81,10 @@ def _get_prepped_model_field(model_obj, field):
     """
     Gets the value of a field of a model obj that is prepared for the db.
     """
-    return model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field))
+    try:
+        return model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field))
+    except:
+        return getattr(model_obj, field)
 
 
 def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False):
