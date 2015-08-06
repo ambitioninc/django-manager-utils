@@ -1,13 +1,17 @@
 from itertools import chain
 
+from django.conf import settings
+from django.db import transaction
 from django.db.models import Manager
 from django.db.models.query import QuerySet
 from django.dispatch import Signal
 from querybuilder.query import Query
 
-
 # A signal that is emitted when any bulk operation occurs
 post_bulk_operation = Signal(providing_args=['model'])
+
+def _is_sqllite3():
+    return 'sqlite3' in settings.DATABASES['default']['ENGINE']
 
 
 def id_dict(queryset):
@@ -330,11 +334,16 @@ def bulk_update(manager, model_objs, fields_to_update):
     if len(updated_rows) == 0 or len(fields_to_update) == 0:
         return
 
-    # Execute the bulk update
-    Query().from_table(
-        table=manager.model,
-        fields=chain([manager.model._meta.pk.attname] + fields_to_update),
-    ).update(updated_rows)
+    # delete and resave records if sqllite3, otherwise run raw sql
+    if _is_sqllite3():
+        with transaction.atomic():
+            manager.objects.delete(pk__in=[m.pk for m in model_objs])
+            manager.objects.bulk_insert(model_objs)
+    else:
+        Query().from_table(
+            table=manager.model,
+            fields=chain([manager.model._meta.pk.attname] + fields_to_update),
+        ).update(updated_rows)
 
     post_bulk_operation.send(sender=manager.model, model=manager.model)
 
