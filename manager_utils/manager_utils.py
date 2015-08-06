@@ -10,9 +10,6 @@ from querybuilder.query import Query
 # A signal that is emitted when any bulk operation occurs
 post_bulk_operation = Signal(providing_args=['model'])
 
-def _is_sqllite3():
-    return 'sqlite3' in settings.DATABASES['default']['ENGINE']
-
 
 def id_dict(queryset):
     """
@@ -334,11 +331,11 @@ def bulk_update(manager, model_objs, fields_to_update):
     if len(updated_rows) == 0 or len(fields_to_update) == 0:
         return
 
-    # delete and resave records if sqllite3, otherwise run raw sql
-    if _is_sqllite3():
+    # delete and resave records if sqllite3, otherwise run raw (non-sqlite3 compatible) sql to update more efficiently
+    if 'sqlite3' in settings.DATABASES['default']['ENGINE']
         with transaction.atomic():
             manager.objects.delete(pk__in=[m.pk for m in model_objs])
-            manager.objects.bulk_insert(model_objs)
+            manager.objects.bulk_create(model_objs)
     else:
         Query().from_table(
             table=manager.model,
