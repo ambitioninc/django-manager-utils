@@ -332,7 +332,7 @@ def bulk_update(manager, model_objs, fields_to_update):
         return
 
     # delete and resave records if sqllite3, otherwise run raw (non-sqlite3 compatible) sql to update more efficiently
-    if 'sqlite3' in settings.DATABASES['default']['ENGINE']
+    if 'sqlite3' in settings.DATABASES['default']['ENGINE']:
         with transaction.atomic():
             manager.objects.delete(pk__in=[m.pk for m in model_objs])
             manager.objects.bulk_create(model_objs)
