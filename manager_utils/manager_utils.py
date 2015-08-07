@@ -335,7 +335,8 @@ def bulk_update(manager, model_objs, fields_to_update, delete_and_create=False):
     # warn about need to switch update strategy
     if 'sqlite3' in settings.DATABASES['default']['ENGINE'] and not delete_and_create:
         sys.stderr.write(
-            '\nWarning: manager_utils.bulk_update() is switching to delete_and_create mode for sqlite compatibility\n'
+            '\nWarning: manager_utils.bulk_update() is switching to delete_and_create mode for sqlite compatibility.\n'
+            ' The updated models will have different pks.'
         )
         delete_and_create = True
 
