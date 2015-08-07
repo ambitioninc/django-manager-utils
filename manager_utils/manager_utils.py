@@ -1,4 +1,5 @@
 from itertools import chain
+import sys
 
 from django.conf import settings
 from django.db import transaction
@@ -288,14 +289,18 @@ def single(queryset):
     return queryset.get()
 
 
-def bulk_update(manager, model_objs, fields_to_update):
+def bulk_update(manager, model_objs, fields_to_update, delete_and_create=False):
     """
     Bulk updates a list of model objects that are already saved.
 
     :type model_objs: list of :class:`Models<django:django.db.models.Model>`
     :param model_objs: A list of model objects that have been updated.
-        fields_to_update: A list of fields to be updated. Only these fields will be updated
 
+    :type fields_to_update: list
+    :param fields_to_update: A list of fields to be updated. Only these fields will be updated
+
+    :type: delete_and_create: bool
+    :param delete_and_create: When true, updates by deleting existing and inserting updated (note: alters pks)
 
     :signals: Emits a post_bulk_operation signal when completed.
 
@@ -324,6 +329,14 @@ def bulk_update(manager, model_objs, fields_to_update):
         10, 20.0
 
     """
+
+    # warn about need to switch update strategy
+    if 'sqlite3' in settings.DATABASES['default']['ENGINE'] and not delete_and_create:
+        sys.stderr.write(
+            '\nWarning: manager_utils.bulk_update() is switching to delete_and_create mode for sqlite compatibility\n'
+        )
+        delete_and_create = True
+
     updated_rows = [
         [model_obj.pk] + [_get_prepped_model_field(model_obj, field_name) for field_name in fields_to_update]
         for model_obj in model_objs
@@ -331,11 +344,12 @@ def bulk_update(manager, model_objs, fields_to_update):
     if len(updated_rows) == 0 or len(fields_to_update) == 0:
         return
 
-    # delete and resave records if sqllite3, otherwise run raw (non-sqlite3 compatible) sql to update more efficiently
-    if 'sqlite3' in settings.DATABASES['default']['ENGINE']:
+    # use delete_and_create strategy if requested
+    if delete_and_create:
         with transaction.atomic():
-            manager.objects.delete(pk__in=[m.pk for m in model_objs])
-            manager.objects.bulk_create(model_objs)
+            manager.filter(pk__in=[m.pk for m in model_objs]).delete()
+            manager.bulk_create(model_objs)
+    # use raw sql update
     else:
         Query().from_table(
             table=manager.model,

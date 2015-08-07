@@ -1,5 +1,3 @@
-import os
-
 from django.test import TestCase
 from django.test.utils import override_settings
 from django_dynamic_fixture import G
@@ -9,8 +7,6 @@ from mock import patch
 from pytz import timezone
 
 from manager_utils.tests import models
-
-SQLITE_FILE = '/tmp/manager_utils_test.sqlite3'
 
 
 class TestGetPreppedModelField(TestCase):
@@ -418,14 +414,6 @@ class BulkUpsertTest(TestCase):
         """
         Tests the case when some updates were previously stored and a queryset is used on the bulk upsert.
         """
-        #####################################
-        from django.conf import settings
-        print
-        print '*'*80
-        print 'database = ', settings.DATABASES['default']['ENGINE']
-        print '*'*80
-        #####################################
-
         # Create previously stored test models with a unique int field and -1 for all other fields
         for i in range(3):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
@@ -444,49 +432,13 @@ class BulkUpsertTest(TestCase):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
 
-@override_settings(ENGINE='django.db.backends.sqlite3', NAME=SQLITE_FILE)
+
+@override_settings(DATABASES={'default': dict(ENGINE='django.db.backends.sqlite3')})
 class BulkUpsertSqliteTest(BulkUpsertTest):
     """
     Redo all bulk upsert tests with sqlite
     """
-    def tearDown(self):
-        if os.path.isfile(SQLITE_FILE):
-            print '*'*80
-            print 'removing test file'
-            print '*'*80
-            os.remove(SQLITE_FILE)
-
-    def test_some_updates_unique_int_char_field_queryset(self):
-        """
-        Tests the case when some updates were previously stored and a queryset is used on the bulk upsert.
-        """
-        #####################################
-        from django.conf import settings
-        print
-        print '^'*80
-        print 'database = ', settings.DATABASES['default']['ENGINE']
-        print '*'*80
-        #####################################
-
-        # Create previously stored test models with a unique int field and -1 for all other fields
-        for i in range(3):
-            G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-
-        # Update using the int field as a uniqueness constraint on a queryset. Only one object should be updated.
-        models.TestModel.objects.filter(int_field=0).bulk_upsert([
-            models.TestModel(int_field=0, char_field='0', float_field=0),
-            models.TestModel(int_field=1, char_field='1', float_field=1),
-            models.TestModel(int_field=2, char_field='2', float_field=2),
-        ], ['int_field'], ['float_field'])
-
-        # Verify that two new objecs were inserted
-        self.assertEquals(models.TestModel.objects.count(), 5)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
-        for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
-            self.assertEqual(model_obj.int_field, i)
-            self.assertEqual(model_obj.char_field, '-1')
-
-
+    pass
 
 
 class PostBulkOperationSignalTest(TestCase):
