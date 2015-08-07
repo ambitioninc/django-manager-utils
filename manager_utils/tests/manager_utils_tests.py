@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.test.utils import override_settings
 from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 from manager_utils.manager_utils import _get_prepped_model_field
@@ -430,6 +431,32 @@ class BulkUpsertTest(TestCase):
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
+
+
+@override_settings(DATABASES={'default': dict(ENGINE='django.db.backends.sqlite3')})
+class BulkUpsertSqliteTest(BulkUpsertTest):
+    """
+    Redo all bulk upsert tests with sqlite and and add one test for delete_and_create flag
+    """
+    def test_return_created_updated_values_with_insert_delete(self):
+        """
+        Tests returning values when the items are either updated or created.
+        """
+        # Create an item that will be updated
+        G(models.TestModel, int_field=2, float_field=1.0)
+        return_values = models.TestModel.objects.bulk_upsert(
+            [
+                models.TestModel(int_field=1, float_field=3.0), models.TestModel(int_field=2.0, float_field=3.0),
+                models.TestModel(int_field=3, float_field=3.0), models.TestModel(int_field=4, float_field=3.0)
+            ],
+            ['int_field'], ['float_field'], return_upserts=True, delete_and_create=True)
+
+        self.assertEquals(len(return_values), 4)
+        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
+            self.assertEquals(test_model.int_field, expected_int)
+            self.assertAlmostEquals(test_model.float_field, 3.0)
+            self.assertIsNotNone(test_model.id)
+        self.assertEquals(models.TestModel.objects.count(), 4)
 
 
 class PostBulkOperationSignalTest(TestCase):

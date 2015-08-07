@@ -1,10 +1,12 @@
 from itertools import chain
+import sys
 
+from django.conf import settings
+from django.db import transaction
 from django.db.models import Manager
 from django.db.models.query import QuerySet
 from django.dispatch import Signal
 from querybuilder.query import Query
-
 
 # A signal that is emitted when any bulk operation occurs
 post_bulk_operation = Signal(providing_args=['model'])
@@ -87,7 +89,9 @@ def _get_prepped_model_field(model_obj, field):
         return getattr(model_obj, field)
 
 
-def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False):
+def bulk_upsert(
+        queryset, model_objs, unique_fields, update_fields=None, return_upserts=False, sync=False,
+        delete_and_create=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -202,7 +206,7 @@ def bulk_upsert(queryset, model_objs, unique_fields, update_fields=None, return_
 
     # Apply bulk updates and creates
     if update_fields:
-        bulk_update(queryset, model_objs_to_update, update_fields)
+        bulk_update(queryset, model_objs_to_update, update_fields, delete_and_create=delete_and_create)
     queryset.bulk_create(model_objs_to_create)
 
     # Optionally return the bulk upserted values
@@ -287,14 +291,18 @@ def single(queryset):
     return queryset.get()
 
 
-def bulk_update(manager, model_objs, fields_to_update):
+def bulk_update(manager, model_objs, fields_to_update, delete_and_create=False):
     """
     Bulk updates a list of model objects that are already saved.
 
     :type model_objs: list of :class:`Models<django:django.db.models.Model>`
     :param model_objs: A list of model objects that have been updated.
-        fields_to_update: A list of fields to be updated. Only these fields will be updated
 
+    :type fields_to_update: list
+    :param fields_to_update: A list of fields to be updated. Only these fields will be updated
+
+    :type: delete_and_create: bool
+    :param delete_and_create: When true, updates by deleting existing and inserting updated (note: alters pks)
 
     :signals: Emits a post_bulk_operation signal when completed.
 
@@ -323,6 +331,15 @@ def bulk_update(manager, model_objs, fields_to_update):
         10, 20.0
 
     """
+
+    # warn about need to switch update strategy
+    if 'sqlite3' in settings.DATABASES['default']['ENGINE'] and not delete_and_create:
+        sys.stderr.write(
+            '\nWarning: manager_utils.bulk_update() is switching to delete_and_create mode for sqlite compatibility.\n'
+            'The updated models will have different pks.\n'
+        )
+        delete_and_create = True
+
     updated_rows = [
         [model_obj.pk] + [_get_prepped_model_field(model_obj, field_name) for field_name in fields_to_update]
         for model_obj in model_objs
@@ -330,11 +347,17 @@ def bulk_update(manager, model_objs, fields_to_update):
     if len(updated_rows) == 0 or len(fields_to_update) == 0:
         return
 
-    # Execute the bulk update
-    Query().from_table(
-        table=manager.model,
-        fields=chain([manager.model._meta.pk.attname] + fields_to_update),
-    ).update(updated_rows)
+    # use delete_and_create strategy if requested
+    if delete_and_create:
+        with transaction.atomic():
+            manager.filter(pk__in=[m.pk for m in model_objs]).delete()
+            manager.bulk_create(model_objs)
+    # use raw sql update
+    else:
+        Query().from_table(
+            table=manager.model,
+            fields=chain([manager.model._meta.pk.attname] + fields_to_update),
+        ).update(updated_rows)
 
     post_bulk_operation.send(sender=manager.model, model=manager.model)
 
@@ -414,8 +437,11 @@ class ManagerUtilsQuerySet(QuerySet):
     def id_dict(self):
         return id_dict(self)
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
-        return bulk_upsert(self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
+    def bulk_upsert(
+            self, model_objs, unique_fields, update_fields=None, return_upserts=False, delete_and_create=False):
+        return bulk_upsert(
+            self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts,
+            delete_and_create=delete_and_create)
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self, model_objs, unique_fields, update_fields=update_fields)
@@ -446,9 +472,11 @@ class ManagerUtilsMixin(object):
     def id_dict(self):
         return id_dict(self.get_queryset())
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
+    def bulk_upsert(
+            self, model_objs, unique_fields, update_fields=None, return_upserts=False, delete_and_create=False):
         return bulk_upsert(
-            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
+            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields,
+            return_upserts=return_upserts, delete_and_create=delete_and_create)
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)
