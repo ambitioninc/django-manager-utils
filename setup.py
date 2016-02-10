@@ -37,7 +37,7 @@ setup(
     ],
     install_requires=[
         'django>=1.7',
-        'django-query-builder>=0.6.1',
+        'django-query-builder>=0.9.0',
     ],
     tests_require=[
         'coverage',
