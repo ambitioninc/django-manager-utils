@@ -36,8 +36,8 @@ setup(
         'Framework :: Django',
     ],
     install_requires=[
-        'django>=1.8',
-        'django-query-builder>=0.9.0',
+        'django>=1.7',
+        'django-query-builder>=0.10.0',
     ],
     tests_require=[
         'coverage',
