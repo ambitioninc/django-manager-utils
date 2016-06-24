@@ -454,9 +454,9 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int and char field as a uniqueness constraint. All three objects are created
         models.TestModel.objects.bulk_upsert([
-            models.TestModel(int_field=0, char_field='0', float_field=0),
-            models.TestModel(int_field=1, char_field='1', float_field=1),
-            models.TestModel(int_field=2, char_field='2', float_field=2),
+            models.TestModel(int_field=3, char_field='0', float_field=0),
+            models.TestModel(int_field=4, char_field='1', float_field=1),
+            models.TestModel(int_field=5, char_field='2', float_field=2),
         ], ['int_field', 'char_field'], ['float_field'])
 
         # Verify that no updates occured
@@ -468,8 +468,8 @@ class BulkUpsertTest(TestCase):
             self.assertAlmostEqual(model_obj.float_field, -1)
         self.assertEquals(models.TestModel.objects.exclude(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.exclude(char_field='-1').order_by('int_field')):
-            self.assertEqual(model_obj.int_field, i)
-            self.assertEqual(model_obj.char_field, str(i))
+            self.assertEqual(model_obj.int_field, i + 3)
+            self.assertEqual(model_obj.char_field, str(i + 3))
             self.assertAlmostEqual(model_obj.float_field, i)
 
     def test_some_updates_unique_int_char_field_queryset(self):
