@@ -181,15 +181,6 @@ class BulkUpsertTest(TestCase):
         with self.assertRaises(NotImplementedError):
             models.TestModel.objects.bulk_upsert([], ['float_field', 'int_field'], ['float_field'], return_upserts=True)
 
-    def test_sync_with_native_not_supported(self):
-        """
-        Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
-        """
-        with self.assertRaises(NotImplementedError):
-            models.TestModel.objects.bulk_upsert(
-                [], ['float_field', 'int_field'], ['float_field'], return_upserts=True, sync=True, native=True
-            )
-
     def test_return_created_values(self):
         """
         Tests that values that are created are returned properly when return_upserts is True.
@@ -242,11 +233,14 @@ class BulkUpsertTest(TestCase):
         # Test native
         # Create an item that will be updated
         G(models.TestModel, int_field=2, float_field=1.0)
+        model_objects = [
+            models.TestModel(int_field=1, float_field=3.0),
+            models.TestModel(int_field=2.0, float_field=3.0),
+            models.TestModel(int_field=3, float_field=3.0),
+            models.TestModel(int_field=4, float_field=3.0)
+        ]
         return_values = models.TestModel.objects.bulk_upsert(
-            [
-                models.TestModel(int_field=1, float_field=3.0), models.TestModel(int_field=2.0, float_field=3.0),
-                models.TestModel(int_field=3, float_field=3.0), models.TestModel(int_field=4, float_field=3.0)
-            ],
+            model_objects,
             ['int_field'],
             ['float_field'],
             return_upserts=True,
