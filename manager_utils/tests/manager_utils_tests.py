@@ -483,8 +483,8 @@ class BulkUpsertTest(TestCase):
         # Update using the int field as a uniqueness constraint on a queryset. Only one object should be updated.
         models.TestModel.objects.filter(int_field=0).bulk_upsert([
             models.TestModel(int_field=0, char_field='0', float_field=0),
-            models.TestModel(int_field=1, char_field='1', float_field=1),
-            models.TestModel(int_field=2, char_field='2', float_field=2),
+            models.TestModel(int_field=4, char_field='1', float_field=1),
+            models.TestModel(int_field=5, char_field='2', float_field=2),
         ], ['int_field'], ['float_field'])
 
         # Verify that two new objecs were inserted

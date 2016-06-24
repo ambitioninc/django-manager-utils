@@ -2,7 +2,7 @@ Release Notes
 =============
 
 v0.10.0
-------
+-------
 * Add native postgres upsert support
 
 v0.9.1
