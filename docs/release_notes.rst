@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.10.0
+------
+* Add native postgres upsert support
+
 v0.9.1
 ------
 * Add Django 1.9 support

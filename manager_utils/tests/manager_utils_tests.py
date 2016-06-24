@@ -168,6 +168,12 @@ class BulkUpsertTest(TestCase):
         return_values = models.TestModel.objects.bulk_upsert([], ['float_field'], ['float_field'], return_upserts=True)
         self.assertEquals(return_values, [])
 
+        # Test native
+        return_values = models.TestModel.objects.bulk_upsert(
+            [], ['float_field'], ['float_field'], return_upserts=True, native=True
+        )
+        self.assertEquals(return_values, [])
+
     def test_return_multi_unique_fields_not_supported(self):
         """
         Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
@@ -175,13 +181,36 @@ class BulkUpsertTest(TestCase):
         with self.assertRaises(NotImplementedError):
             models.TestModel.objects.bulk_upsert([], ['float_field', 'int_field'], ['float_field'], return_upserts=True)
 
+    def test_sync_with_native_not_supported(self):
+        """
+        Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
+        """
+        with self.assertRaises(NotImplementedError):
+            models.TestModel.objects.bulk_upsert(
+                [], ['float_field', 'int_field'], ['float_field'], return_upserts=True, sync=True, native=True
+            )
+
     def test_return_created_values(self):
         """
         Tests that values that are created are returned properly when return_upserts is True.
         """
         return_values = models.TestModel.objects.bulk_upsert(
             [models.TestModel(int_field=1), models.TestModel(int_field=3), models.TestModel(int_field=4)],
-            ['int_field'], ['float_field'], return_upserts=True)
+            ['int_field'], ['float_field'], return_upserts=True
+        )
+
+        self.assertEquals(len(return_values), 3)
+        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
+            self.assertEquals(test_model.int_field, expected_int)
+            self.assertIsNotNone(test_model.id)
+        self.assertEquals(models.TestModel.objects.count(), 3)
+        models.TestModel.objects.all().delete()
+
+        # Test native
+        return_values = models.TestModel.objects.bulk_upsert(
+            [models.TestModel(int_field=1), models.TestModel(int_field=3), models.TestModel(int_field=4)],
+            ['int_field'], ['float_field'], return_upserts=True, native=True
+        )
 
         self.assertEquals(len(return_values), 3)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
@@ -201,6 +230,28 @@ class BulkUpsertTest(TestCase):
                 models.TestModel(int_field=3, float_field=3.0), models.TestModel(int_field=4, float_field=3.0)
             ],
             ['int_field'], ['float_field'], return_upserts=True)
+
+        self.assertEquals(len(return_values), 4)
+        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
+            self.assertEquals(test_model.int_field, expected_int)
+            self.assertAlmostEquals(test_model.float_field, 3.0)
+            self.assertIsNotNone(test_model.id)
+        self.assertEquals(models.TestModel.objects.count(), 4)
+        models.TestModel.objects.all().delete()
+
+        # Test native
+        # Create an item that will be updated
+        G(models.TestModel, int_field=2, float_field=1.0)
+        return_values = models.TestModel.objects.bulk_upsert(
+            [
+                models.TestModel(int_field=1, float_field=3.0), models.TestModel(int_field=2.0, float_field=3.0),
+                models.TestModel(int_field=3, float_field=3.0), models.TestModel(int_field=4, float_field=3.0)
+            ],
+            ['int_field'],
+            ['float_field'],
+            return_upserts=True,
+            native=True
+        )
 
         self.assertEquals(len(return_values), 4)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
@@ -229,6 +280,24 @@ class BulkUpsertTest(TestCase):
         models.TestModel.objects.bulk_upsert([
             models.TestModel(int_field=1), models.TestModel(int_field=2), models.TestModel(int_field=3)
         ], ['int_field'])
+        # Three objects should now exist
+        self.assertEquals(models.TestModel.objects.count(), 3)
+        for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
+            self.assertEquals(test_model.int_field, expected_int_value)
+        models.TestModel.objects.all().delete()
+
+        # Test native
+        # Create models that already exist
+        G(models.TestModel, int_field=1)
+        G(models.TestModel, int_field=2)
+        # Perform a bulk_upsert with one new model
+        models.TestModel.objects.bulk_upsert(
+            [
+                models.TestModel(int_field=1), models.TestModel(int_field=2), models.TestModel(int_field=3)
+            ],
+            ['int_field'],
+            native=True
+        )
         # Three objects should now exist
         self.assertEquals(models.TestModel.objects.count(), 3)
         for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
