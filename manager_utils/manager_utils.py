@@ -433,7 +433,7 @@ class ManagerUtilsQuerySet(QuerySet):
 
     def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False, native=False):
         return bulk_upsert(
-            self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, native=False
+            self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, native=native
         )
 
     def sync(self, model_objs, unique_fields, update_fields=None):
@@ -465,9 +465,11 @@ class ManagerUtilsMixin(object):
     def id_dict(self):
         return id_dict(self.get_queryset())
 
-    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False):
+    def bulk_upsert(self, model_objs, unique_fields, update_fields=None, return_upserts=False, native=False):
         return bulk_upsert(
-            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts)
+            self.get_queryset(),
+            model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, native=native
+        )
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)
