@@ -14,6 +14,9 @@ class TestModel(models.Model):
 
     objects = ManagerUtilsManager()
 
+    class Meta:
+        unique_together = ('int_field', 'char_field')
+
 
 class TestForeignKeyModel(models.Model):
     """
