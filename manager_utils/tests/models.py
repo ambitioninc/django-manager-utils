@@ -10,7 +10,7 @@ class TestModel(models.Model):
     int_field = models.IntegerField(null=True, unique=True)
     char_field = models.CharField(max_length=128, null=True)
     float_field = models.FloatField(null=True)
-    time_zone = TimeZoneField(default='UTC', unique=True)
+    time_zone = TimeZoneField(default='UTC')
 
     objects = ManagerUtilsManager()
 

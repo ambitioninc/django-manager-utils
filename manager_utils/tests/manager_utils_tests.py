@@ -525,36 +525,6 @@ class BulkUpsertTest(TestCase):
         self.assertEquals(m3.char_field, '2')
         self.assertAlmostEquals(m3.float_field, 2)
 
-    def test_some_updates_unique_timezone_field_update_float_field_native(self):
-        """
-        Tests the case when some updates were previously stored and the timezone field is used as a uniqueness
-        constraint. Only updates the float field.
-        """
-        # Create previously stored test models with a unique int field and -1 for all other fields
-        for i in ['US/Eastern', 'US/Central']:
-            G(models.TestModel, time_zone=i, char_field='-1', float_field=-1)
-
-        # Update using the int field as a uniqueness constraint. The first two are updated while the third is created
-        models.TestModel.objects.bulk_upsert([
-            models.TestModel(time_zone=timezone('US/Eastern'), char_field='0', float_field=0),
-            models.TestModel(time_zone=timezone('US/Central'), char_field='1', float_field=1),
-            models.TestModel(time_zone=timezone('UTC'), char_field='2', float_field=2),
-        ], ['time_zone'], ['float_field'], native=True)
-
-        # Verify that the float field was updated for the first two models and the char field was not updated for
-        # the first two. The char field, however, should be '2' for the third model since it was created
-        m1 = models.TestModel.objects.get(time_zone=timezone('US/Eastern'))
-        self.assertEquals(m1.char_field, '-1')
-        self.assertAlmostEquals(m1.float_field, 0)
-
-        m2 = models.TestModel.objects.get(time_zone=timezone('US/Central'))
-        self.assertEquals(m2.char_field, '-1')
-        self.assertAlmostEquals(m2.float_field, 1)
-
-        m3 = models.TestModel.objects.get(time_zone=timezone('UTC'))
-        self.assertEquals(m3.char_field, '2')
-        self.assertAlmostEquals(m3.float_field, 2)
-
     def test_some_updates_unique_int_char_field_update_float_field(self):
         """
         Tests the case when some updates were previously stored and the int and char fields are used as a uniqueness
