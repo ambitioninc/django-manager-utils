@@ -195,7 +195,7 @@ def bulk_upsert(
         )
         post_bulk_operation.send(sender=queryset.model, model=queryset.model)
 
-        return return_value or None
+        return return_value or []
 
     # Create a look up table for all of the objects in the queryset keyed on the unique_fields
     extant_model_objs = {
