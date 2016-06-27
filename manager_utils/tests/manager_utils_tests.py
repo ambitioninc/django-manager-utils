@@ -469,7 +469,7 @@ class BulkUpsertTest(TestCase):
         self.assertEquals(models.TestModel.objects.exclude(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.exclude(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i + 3)
-            self.assertEqual(model_obj.char_field, str(i + 3))
+            self.assertEqual(model_obj.char_field, str(i))
             self.assertAlmostEqual(model_obj.float_field, i)
 
     def test_some_updates_unique_int_char_field_queryset(self):
