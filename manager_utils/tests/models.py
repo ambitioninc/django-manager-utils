@@ -7,12 +7,15 @@ class TestModel(models.Model):
     """
     A model for testing manager utils.
     """
-    int_field = models.IntegerField(null=True)
+    int_field = models.IntegerField(null=True, unique=True)
     char_field = models.CharField(max_length=128, null=True)
     float_field = models.FloatField(null=True)
     time_zone = TimeZoneField(default='UTC')
 
     objects = ManagerUtilsManager()
+
+    class Meta:
+        unique_together = ('int_field', 'char_field')
 
 
 class TestForeignKeyModel(models.Model):
