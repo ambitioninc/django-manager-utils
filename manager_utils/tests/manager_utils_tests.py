@@ -168,6 +168,14 @@ class BulkUpsertTest(TestCase):
         return_values = models.TestModel.objects.bulk_upsert([], ['float_field'], ['float_field'], return_upserts=True)
         self.assertEquals(return_values, [])
 
+    def test_return_upserts_distinct_none(self):
+        """
+        Tests the return_upserts_distinct flag on bulk upserts when there is no data.
+        """
+        return_values = models.TestModel.objects.bulk_upsert(
+            [], ['float_field'], ['float_field'], return_upserts_distinct=True)
+        self.assertEquals(return_values, ([], []))
+
     def test_return_upserts_none_native(self):
         """
         Tests the return_upserts flag on bulk upserts when there is no data.
@@ -177,12 +185,28 @@ class BulkUpsertTest(TestCase):
         )
         self.assertEquals(return_values, [])
 
+    def test_return_upserts_distinct_none_native(self):
+        """
+        verifies that return_upserts_distinct flag with native is not supported
+        """
+        with self.assertRaises(NotImplementedError):
+            models.TestModel.objects.bulk_upsert(
+                [], ['float_field'], ['float_field'], return_upserts_distinct=True, native=True)
+
     def test_return_multi_unique_fields_not_supported(self):
         """
         Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
         """
         with self.assertRaises(NotImplementedError):
             models.TestModel.objects.bulk_upsert([], ['float_field', 'int_field'], ['float_field'], return_upserts=True)
+
+    def test_return_multi_unique_distinct_fields_not_supported(self):
+        """
+        Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
+        """
+        with self.assertRaises(NotImplementedError):
+            models.TestModel.objects.bulk_upsert(
+                [], ['float_field', 'int_field'], ['float_field'], return_upserts_distinct=True)
 
     def test_return_created_values(self):
         """
@@ -260,6 +284,35 @@ class BulkUpsertTest(TestCase):
             self.assertAlmostEquals(test_model.float_field, 3.0)
             self.assertIsNotNone(test_model.id)
         self.assertEquals(models.TestModel.objects.count(), 4)
+
+    def test_return_created_updated_values_distinct(self):
+        """
+        Tests returning distinct sets of values when the items are either updated or created.
+        """
+        # Create an item that will be updated
+        G(models.TestModel, int_field=2, float_field=1.0)
+        model_objects = [
+            models.TestModel(int_field=1, float_field=3.0),
+            models.TestModel(int_field=2.0, float_field=3.0),
+            models.TestModel(int_field=3, float_field=3.0),
+            models.TestModel(int_field=4, float_field=3.0)
+        ]
+        updated, created = models.TestModel.objects.bulk_upsert(
+            model_objects, ['int_field'], ['float_field'], return_upserts_distinct=True)
+        self.assertEquals(
+            [(2, 3.0)],
+            [
+                (obj.int_field, obj.float_field)
+                for obj in sorted(updated, key=lambda k: k.int_field)
+            ]
+        )
+        self.assertEquals(
+            [(1, 3.0), (3, 3.0), (4, 3.0)],
+            [
+                (obj.int_field, obj.float_field)
+                for obj in sorted(created, key=lambda k: k.int_field)
+            ]
+        )
 
     def test_wo_unique_fields(self):
         """
