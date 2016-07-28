@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.11.0
+-------
+* Where default return value of bulk_upsert was None, now it is a list of lists, the first being the list of updated models, the second being the created models
+
 v0.10.0
 -------
 * Add native postgres upsert support
