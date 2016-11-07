@@ -455,6 +455,15 @@ class ManagerUtilsQuerySet(QuerySet):
             self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, native=native
         )
 
+    def bulk_create(self, *args, **kwargs):
+        """
+        Overrides Django's bulk_create function to emit a post_bulk_operation signal when bulk_create
+        is finished.
+        """
+        ret_val = super(ManagerUtilsQuerySet, self).bulk_create(*args, **kwargs)
+        post_bulk_operation.send(sender=self.model, model=self.model)
+        return ret_val
+
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self, model_objs, unique_fields, update_fields=update_fields)
 
@@ -493,15 +502,6 @@ class ManagerUtilsMixin(object):
 
     def sync(self, model_objs, unique_fields, update_fields=None):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)
-
-    def bulk_create(self, *args, **kwargs):
-        """
-        Overrides Django's bulk_create function to emit a post_bulk_operation signal when bulk_create
-        is finished.
-        """
-        ret_val = super(ManagerUtilsMixin, self).bulk_create(*args, **kwargs)
-        post_bulk_operation.send(sender=self.model, model=self.model)
-        return ret_val
 
     def bulk_update(self, model_objs, fields_to_update):
         return bulk_update(self.get_queryset(), model_objs, fields_to_update)
