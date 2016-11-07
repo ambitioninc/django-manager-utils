@@ -798,6 +798,15 @@ class PostBulkOperationSignalTest(TestCase):
         self.assertEquals(self.signal_handler.model, models.TestModel)
         self.assertEquals(self.signal_handler.num_times_called, 1)
 
+    def test_post_bulk_operation_bulk_create_queryset(self):
+        """
+        Tests that the bulk_create operation emits the post_bulk_operation signal.
+        """
+        models.TestModel.objects.all().bulk_create([models.TestModel(int_field=2)])
+
+        self.assertEquals(self.signal_handler.model, models.TestModel)
+        self.assertEquals(self.signal_handler.num_times_called, 1)
+
     def test_save_doesnt_emit_signal(self):
         """
         Tests that a non-bulk operation doesn't emit the signal.
