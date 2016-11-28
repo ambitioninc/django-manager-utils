@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.12.0
+-------
+* Add python 3.5 support, drop django 1.7 support
+
 v0.11.1
 -------
 * Added bulk_create override for ManagerUtilsQuerySet to emit post bulk operation signal
