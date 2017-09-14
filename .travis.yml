@@ -32,7 +32,6 @@ install:
   - pip install -r requirements/docs.txt
 before_script:
   - psql -c 'CREATE DATABASE manager_utils;' -U postgres
-  - psql -c 'CREATE EXTENSION postgis;' -U postgres
 script:
   - flake8 .
   - coverage run setup.py test
