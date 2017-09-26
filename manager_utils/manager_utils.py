@@ -135,8 +135,7 @@ def bulk_upsert(
             entire list of model objects is synced to the queryset.
 
     :type native: bool
-    :param native: A flag specifying whether to use postgres insert on conflict (upsert). If this flag is true,
-            then sync will not work and an exception will be raised.
+    :param native: A flag specifying whether to use postgres insert on conflict (upsert).
 
     :signals: Emits a post_bulk_operation when a bulk_update or a bulk_create occurs.
 
@@ -196,9 +195,6 @@ def bulk_upsert(
         7
 
     """
-    if sync and native:
-        raise NotImplementedError('sync option can\'t be used with native postgres upsert')
-
     if not unique_fields:
         raise ValueError('Must provide unique_fields argument')
     update_fields = update_fields or []
@@ -207,11 +203,14 @@ def bulk_upsert(
         if return_upserts_distinct:
             raise NotImplementedError('return upserts distinct not supported with native postgres upsert')
         return_value = Query().from_table(table=queryset.model).upsert(
-            model_objs, unique_fields, update_fields, return_models=return_upserts
-        )
+            model_objs, unique_fields, update_fields, return_models=return_upserts or sync
+        ) or []
+        if sync:
+            queryset.exclude(pk__in=[m.pk for m in return_value]).delete()
+
         post_bulk_operation.send(sender=queryset.model, model=queryset.model)
 
-        return return_value or []
+        return return_value
 
     # Create a look up table for all of the objects in the queryset keyed on the unique_fields
     extant_model_objs = {
@@ -265,6 +264,9 @@ def sync(queryset, model_objs, unique_fields, update_fields=None, **kwargs):
             models. If None, this function will only perform a bulk create for model_objs that do not
             currently exist in the database.
 
+    :type native: bool
+    :param native: A flag specifying whether to use postgres insert on conflict (upsert) when performing
+            bulk upsert.
     """
     return bulk_upsert(queryset, model_objs, unique_fields, update_fields=update_fields, sync=True, **kwargs)
 
@@ -464,8 +466,8 @@ class ManagerUtilsQuerySet(QuerySet):
         post_bulk_operation.send(sender=self.model, model=self.model)
         return ret_val
 
-    def sync(self, model_objs, unique_fields, update_fields=None):
-        return sync(self, model_objs, unique_fields, update_fields=update_fields)
+    def sync(self, model_objs, unique_fields, update_fields=None, native=False):
+        return sync(self, model_objs, unique_fields, update_fields=update_fields, native=native)
 
     def get_or_none(self, **query_params):
         return get_or_none(self, **query_params)
@@ -500,8 +502,8 @@ class ManagerUtilsMixin(object):
             self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts,
             return_upserts_distinct=return_upserts_distinct, native=native)
 
-    def sync(self, model_objs, unique_fields, update_fields=None):
-        return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields)
+    def sync(self, model_objs, unique_fields, update_fields=None, native=False):
+        return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, native=native)
 
     def bulk_update(self, model_objs, fields_to_update):
         return bulk_update(self.get_queryset(), model_objs, fields_to_update)
