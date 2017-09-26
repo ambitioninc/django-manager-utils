@@ -71,7 +71,7 @@ class SyncTest(TestCase):
 
         models.TestModel.objects.sync([
             models.TestModel(int_field=4), models.TestModel(int_field=5), models.TestModel(int_field=6)
-        ], ['int_field'], ['float_field'], native=True)
+        ], ['int_field'], ['float_field'], native=native)
 
         self.assertEquals(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
