@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.13.1
+-------
+* Add native support for the sync method, thanks @wesleykendall
+
 v0.13.0
 -------
 * Add python 3.6 support
