@@ -51,6 +51,7 @@ setup(
         'django-dynamic-fixture',
         'pytz',
         'django-timezone-field',
+        'parameterized',
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,

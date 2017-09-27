@@ -3,6 +3,7 @@ from django_dynamic_fixture import G
 from manager_utils import post_bulk_operation
 from manager_utils.manager_utils import _get_prepped_model_field
 from mock import patch
+from parameterized import parameterized
 from pytz import timezone
 
 from manager_utils.tests import models
@@ -19,7 +20,8 @@ class SyncTest(TestCase):
     """
     Tests the sync function.
     """
-    def test_w_char_pk(self):
+    @parameterized.expand([(True,), (False,)])
+    def test_w_char_pk(self, native):
         """
         Tests with a model that has a char pk.
         """
@@ -30,7 +32,7 @@ class SyncTest(TestCase):
         models.TestPkChar.objects.sync([
             models.TestPkChar(my_key='3', char_field='2'), models.TestPkChar(my_key='4', char_field='2'),
             models.TestPkChar(my_key='5', char_field='2')
-        ], ['my_key'], ['char_field'])
+        ], ['my_key'], ['char_field'], native=native)
 
         self.assertEquals(models.TestPkChar.objects.count(), 3)
         self.assertTrue(models.TestPkChar.objects.filter(my_key='3').exists())
@@ -44,20 +46,22 @@ class SyncTest(TestCase):
         test_model = models.TestPkChar.objects.get(pk=extant_obj3.pk)
         self.assertEquals(test_model.char_field, '2')
 
-    def test_no_existing_objs(self):
+    @parameterized.expand([(True,), (False,)])
+    def test_no_existing_objs(self, native):
         """
         Tests when there are no existing objects before the sync.
         """
         models.TestModel.objects.sync([
             models.TestModel(int_field=1), models.TestModel(int_field=3),
             models.TestModel(int_field=4)
-        ], ['int_field'], ['float_field'])
+        ], ['int_field'], ['float_field'], native=native)
         self.assertEquals(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
 
-    def test_existing_objs_all_deleted(self):
+    @parameterized.expand([(True,), (False,)])
+    def test_existing_objs_all_deleted(self, native):
         """
         Tests when there are existing objects that will all be deleted.
         """
@@ -67,7 +71,7 @@ class SyncTest(TestCase):
 
         models.TestModel.objects.sync([
             models.TestModel(int_field=4), models.TestModel(int_field=5), models.TestModel(int_field=6)
-        ], ['int_field'], ['float_field'])
+        ], ['int_field'], ['float_field'], native=native)
 
         self.assertEquals(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
@@ -81,7 +85,8 @@ class SyncTest(TestCase):
         with self.assertRaises(models.TestModel.DoesNotExist):
             models.TestModel.objects.get(id=extant_obj3.id)
 
-    def test_existing_objs_all_deleted_empty_sync(self):
+    @parameterized.expand([(True,), (False,)])
+    def test_existing_objs_all_deleted_empty_sync(self, native):
         """
         Tests when there are existing objects deleted because of an emtpy sync.
         """
@@ -89,7 +94,7 @@ class SyncTest(TestCase):
         extant_obj2 = G(models.TestModel, int_field=2)
         extant_obj3 = G(models.TestModel, int_field=3)
 
-        models.TestModel.objects.sync([], ['int_field'], ['float_field'])
+        models.TestModel.objects.sync([], ['int_field'], ['float_field'], native=native)
 
         self.assertEquals(models.TestModel.objects.count(), 0)
         with self.assertRaises(models.TestModel.DoesNotExist):
@@ -99,7 +104,8 @@ class SyncTest(TestCase):
         with self.assertRaises(models.TestModel.DoesNotExist):
             models.TestModel.objects.get(id=extant_obj3.id)
 
-    def test_existing_objs_some_deleted(self):
+    @parameterized.expand([(True,), (False,)])
+    def test_existing_objs_some_deleted(self, native):
         """
         Tests when some existing objects will be deleted.
         """
@@ -110,7 +116,7 @@ class SyncTest(TestCase):
         models.TestModel.objects.sync([
             models.TestModel(int_field=3, float_field=2), models.TestModel(int_field=4, float_field=2),
             models.TestModel(int_field=5, float_field=2)
-        ], ['int_field'], ['float_field'])
+        ], ['int_field'], ['float_field'], native=native)
 
         self.assertEquals(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
@@ -124,7 +130,8 @@ class SyncTest(TestCase):
         test_model = models.TestModel.objects.get(id=extant_obj3.id)
         self.assertEquals(test_model.int_field, 3)
 
-    def test_existing_objs_some_deleted_w_queryset(self):
+    @parameterized.expand([(True,), (False,)])
+    def test_existing_objs_some_deleted_w_queryset(self, native):
         """
         Tests when some existing objects will be deleted on a queryset
         """
@@ -137,7 +144,7 @@ class SyncTest(TestCase):
         models.TestModel.objects.filter(int_field__lt=4).sync([
             models.TestModel(int_field=1, float_field=2), models.TestModel(int_field=2, float_field=2),
             models.TestModel(int_field=3, float_field=2)
-        ], ['int_field'], ['float_field'])
+        ], ['int_field'], ['float_field'], native=native)
 
         self.assertEquals(models.TestModel.objects.count(), 4)
         self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
