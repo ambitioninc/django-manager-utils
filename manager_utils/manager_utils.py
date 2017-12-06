@@ -206,7 +206,8 @@ def bulk_upsert(
             model_objs, unique_fields, update_fields, return_models=return_upserts or sync
         ) or []
         if sync:
-            queryset.exclude(pk__in=[m.pk for m in return_value]).delete()
+            orig_ids = frozenset(queryset.values_list('pk', flat=True))
+            queryset.filter(pk__in=orig_ids - frozenset([m.pk for m in return_value])).delete()
 
         post_bulk_operation.send(sender=queryset.model, model=queryset.model)
 
