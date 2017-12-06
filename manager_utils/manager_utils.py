@@ -91,7 +91,7 @@ def _get_prepped_model_field(model_obj, field):
     """
     try:
         return model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field))
-    except:
+    except:  # noqa
         return getattr(model_obj, field)
 
 
