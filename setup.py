@@ -33,10 +33,11 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.0',
     ],
     install_requires=[
-        'Django>=2.0',
+        'Django>=1.11',
         'django-query-builder>=1.0.0',
     ],
     tests_require=[
