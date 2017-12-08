@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.13.2
+-------
+* Optimize native sync
+
 v0.13.1
 -------
 * Add native support for the sync method, thanks @wesleykendall
