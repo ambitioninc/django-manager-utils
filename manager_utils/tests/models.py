@@ -23,7 +23,7 @@ class TestForeignKeyModel(models.Model):
     A test model that has a foreign key.
     """
     int_field = models.IntegerField()
-    test_model = models.ForeignKey(TestModel)
+    test_model = models.ForeignKey(TestModel, on_delete=models.CASCADE)
 
     objects = ManagerUtilsManager()
 
@@ -32,7 +32,7 @@ class TestPkForeignKey(models.Model):
     """
     A test model with a primary key thats a foreign key to another model.
     """
-    my_key = models.ForeignKey(TestModel, primary_key=True)
+    my_key = models.ForeignKey(TestModel, primary_key=True, on_delete=models.CASCADE)
     char_field = models.CharField(max_length=128, null=True)
 
     objects = ManagerUtilsManager()
