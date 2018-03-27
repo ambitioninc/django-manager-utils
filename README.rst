@@ -1,11 +1,11 @@
 .. image:: https://travis-ci.org/ambitioninc/django-manager-utils.png
    :target: https://travis-ci.org/ambitioninc/django-manager-utils
 
-.. image:: https://pypip.in/v/django-manager-utils/badge.png
+.. image:: https://img.shields.io/pypi/v/django-manager-utils.svg
     :target: https://pypi.python.org/pypi/django-manager-utils/
     :alt: Latest PyPI version
 
-.. image:: https://pypip.in/d/django-manager-utils/badge.png
+.. image:: https://img.shields.io/pypi/dm/django-manager-utils.svg
     :target: https://pypi.python.org/pypi/django-manager-utils/
     :alt: Number of PyPI downloads
 
