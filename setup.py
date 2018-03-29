@@ -40,8 +40,8 @@ setup(
         'Framework :: Django :: 2.0',
     ],
     install_requires=[
-        'Django>=1.11',
-        'django-query-builder>=1.0.0',
+        'Django>=1.10',
+        'django-query-builder>=1.1.0',
     ],
     tests_require=[
         'coverage',

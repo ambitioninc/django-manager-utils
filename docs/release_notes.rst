@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v1.1.1
+------
+* Fix setup version requirements
+
 v1.1.0
 ------
 * Use tox to support more versions
