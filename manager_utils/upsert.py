@@ -45,15 +45,24 @@ def _fill_auto_fields(model, values):
     return values
 
 
-def _sort_by_unique_fields(values, unique_fields):
+def _sort_by_unique_fields(model, model_objs, unique_fields):
     """Sort a list of models by their unique fields
 
     Sorting models in an upsert greatly reduces the chances of deadlock
     when doing concurrent upserts
     """
-    def sort_key(val):
-        return tuple(getattr(val, f) for f in unique_fields)
-    return sorted(values, key=sort_key)
+    unique_fields = [
+        field for field in model._meta.fields
+        if field.column in unique_fields
+    ]
+
+    def sort_key(model_obj):
+        return tuple(
+            field.get_db_prep_save(getattr(model_obj, field.attname),
+                                   connection)
+            for field in unique_fields
+        )
+    return sorted(model_objs, key=sort_key)
 
 
 def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning):
@@ -195,7 +204,7 @@ def upsert(queryset, model_objs, unique_fields,
     _fill_auto_fields(model, model_objs)
 
     # Sort the rows to reduce the chances of deadlock during concurrent upserts
-    model_objs = _sort_by_unique_fields(model_objs, unique_fields)
+    model_objs = _sort_by_unique_fields(model, model_objs, unique_fields)
     update_fields = _get_update_fields(model, unique_fields, update_fields)
 
     if sync and returning is not True:

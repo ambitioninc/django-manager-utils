@@ -18,6 +18,21 @@ class TestModel(models.Model):
         unique_together = ('int_field', 'char_field')
 
 
+class TestUniqueTzModel(models.Model):
+    """
+    A model for testing manager utils with a timezone field as the uniqueness constraint.
+    """
+    int_field = models.IntegerField(null=True, unique=True)
+    char_field = models.CharField(max_length=128, null=True)
+    float_field = models.FloatField(null=True)
+    time_zone = TimeZoneField(unique=True)
+
+    objects = ManagerUtilsManager()
+
+    class Meta:
+        unique_together = ('int_field', 'char_field')
+
+
 class TestForeignKeyModel(models.Model):
     """
     A test model that has a foreign key.
