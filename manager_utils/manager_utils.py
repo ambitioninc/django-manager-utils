@@ -343,10 +343,10 @@ def bulk_upsert2(queryset, model_objs, unique_fields,
         print(len(updated))
         4
     """
-    ret = upsert2.upsert(queryset, model_objs, unique_fields,
-                         update_fields=update_fields, returning=returning)
+    created, updated, _ = upsert2.upsert(queryset, model_objs, unique_fields,
+                                         update_fields=update_fields, returning=returning)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
-    return ret
+    return created, updated
 
 
 def sync(queryset, model_objs, unique_fields, update_fields=None, **kwargs):
@@ -394,10 +394,10 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
             fields in the list. Return values are split in a tuple of created, updated, and
             deleted models.
     """
-    ret = upsert2.upsert2(queryset, model_objs, unique_fields,
-                          update_fields=update_fields, returning=returning, sync=True)
+    created, updated, deleted = upsert2.upsert2(queryset, model_objs, unique_fields,
+                                                update_fields=update_fields, returning=returning, sync=True)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
-    return ret
+    return created, updated, deleted
 
 
 def get_or_none(queryset, **query_params):
