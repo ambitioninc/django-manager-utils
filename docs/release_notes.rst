@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v1.2.0
+------
+* Added a parallel version 2 interface for bulk_upsert2 and sync2
+
 v1.1.1
 ------
 * Fix setup version requirements
