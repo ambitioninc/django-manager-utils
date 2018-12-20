@@ -404,7 +404,7 @@ def get_or_none(queryset, **query_params):
     """
     Get an object or return None if it doesn't exist.
 
-    :param \*\*query_params: The query parameters used in the lookup.
+    :param **query_params: The query parameters used in the lookup.
 
     :returns: A model object if one exists with the query params, None otherwise.
 
@@ -519,7 +519,7 @@ def upsert(manager, defaults=None, updates=None, **kwargs):
     :param updates: These values are updated when the object is updated. They also override any
             values provided in the defaults when inserting the object.
 
-    :param \*\*kwargs: These values provide the arguments used when checking for the existence of
+    :param **kwargs: These values provide the arguments used when checking for the existence of
             the object. They are used in a similar manner to Django's get_or_create function.
 
     :returns: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)

@@ -33,6 +33,17 @@ class TestUniqueTzModel(models.Model):
         unique_together = ('int_field', 'char_field')
 
 
+class TestAutoDateTimeModel(models.Model):
+    """
+    A model to test that upserts work with auto_now and auto_now_add
+    """
+    int_field = models.IntegerField(unique=True)
+    auto_now_field = models.DateTimeField(auto_now=True)
+    auto_now_add_field = models.DateTimeField(auto_now_add=True)
+
+    objects = ManagerUtilsManager()
+
+
 class TestForeignKeyModel(models.Model):
     """
     A test model that has a foreign key.

@@ -1,5 +1,8 @@
+import datetime as dt
+
 from django.test import TestCase
 from django_dynamic_fixture import G
+import freezegun
 from manager_utils import post_bulk_operation
 from manager_utils.manager_utils import _get_prepped_model_field
 from mock import patch
@@ -936,6 +939,36 @@ class BulkUpsert2Test(TestCase):
         self.assertAlmostEquals(updated[0].float_field, 3.0)
         self.assertIsNotNone(updated[0].id)
         self.assertEquals(models.TestModel.objects.count(), 4)
+
+    def test_created_updated_auto_datetime_values(self):
+        """
+        Tests when the items are either updated or created when auto_now
+        and auto_now_add datetime values are used
+        """
+        # Create an item that will be updated
+        with freezegun.freeze_time('2018-09-01 00:00:00'):
+            G(models.TestAutoDateTimeModel, int_field=1)
+
+        with freezegun.freeze_time('2018-09-02 00:00:00'):
+            created, updated = models.TestAutoDateTimeModel.objects.bulk_upsert2(
+                [
+                    models.TestAutoDateTimeModel(int_field=1),
+                    models.TestAutoDateTimeModel(int_field=2),
+                    models.TestAutoDateTimeModel(int_field=3),
+                    models.TestAutoDateTimeModel(int_field=4)
+                ],
+                ['int_field'], returning=True)
+
+        self.assertEquals(len(created), 3)
+        self.assertEquals(len(updated), 1)
+
+        expected_auto_now = [dt.datetime(2018, 9, 2), dt.datetime(2018, 9, 2),
+                             dt.datetime(2018, 9, 2), dt.datetime(2018, 9, 2)]
+        expected_auto_now_add = [dt.datetime(2018, 9, 1), dt.datetime(2018, 9, 2),
+                                 dt.datetime(2018, 9, 2), dt.datetime(2018, 9, 2)]
+        for i, test_model in enumerate(sorted(created + updated, key=lambda k: k.int_field)):
+            self.assertEquals(test_model.auto_now_field, expected_auto_now[i])
+            self.assertEquals(test_model.auto_now_add_field, expected_auto_now_add[i])
 
     def test_wo_update_fields(self):
         """
