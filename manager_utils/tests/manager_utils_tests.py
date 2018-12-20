@@ -915,6 +915,21 @@ class BulkUpsert2Test(TestCase):
             self.assertIsNotNone(test_model.id)
         self.assertEquals(models.TestModel.objects.count(), 3)
 
+    def test_return_list_of_values(self):
+        """
+        Tests that values that are created are returned properly when returning is True.
+        Set returning to a list of fields
+        """
+        created, updated = models.TestModel.objects.bulk_upsert2(
+            [models.TestModel(int_field=1, float_field=2),
+             models.TestModel(int_field=3, float_field=4),
+             models.TestModel(int_field=4, float_field=5)],
+            ['int_field'], ['float_field'], returning=['float_field']
+        )
+
+        self.assertEquals(len(created), 3)
+        self.assertEquals(set([2, 4, 5]), set([m.float_field for m in created]))
+
     def test_return_created_updated_values(self):
         """
         Tests returning values when the items are either updated or created.
