@@ -164,6 +164,148 @@ class SyncTest(TestCase):
         self.assertEquals(test_model.float_field, 0)
 
 
+class Sync2Test(TestCase):
+    """
+    Tests the sync2 function.
+    """
+    def test_w_char_pk(self):
+        """
+        Tests with a model that has a char pk.
+        """
+        extant_obj1 = G(models.TestPkChar, my_key='1', char_field='1')
+        extant_obj2 = G(models.TestPkChar, my_key='2', char_field='1')
+        extant_obj3 = G(models.TestPkChar, my_key='3', char_field='1')
+
+        models.TestPkChar.objects.sync2([
+            models.TestPkChar(my_key='3', char_field='2'), models.TestPkChar(my_key='4', char_field='2'),
+            models.TestPkChar(my_key='5', char_field='2')
+        ], ['my_key'], ['char_field'])
+
+        self.assertEquals(models.TestPkChar.objects.count(), 3)
+        self.assertTrue(models.TestPkChar.objects.filter(my_key='3').exists())
+        self.assertTrue(models.TestPkChar.objects.filter(my_key='4').exists())
+        self.assertTrue(models.TestPkChar.objects.filter(my_key='5').exists())
+
+        with self.assertRaises(models.TestPkChar.DoesNotExist):
+            models.TestPkChar.objects.get(pk=extant_obj1.pk)
+        with self.assertRaises(models.TestPkChar.DoesNotExist):
+            models.TestPkChar.objects.get(pk=extant_obj2.pk)
+        test_model = models.TestPkChar.objects.get(pk=extant_obj3.pk)
+        self.assertEquals(test_model.char_field, '2')
+
+    def test_no_existing_objs(self):
+        """
+        Tests when there are no existing objects before the sync.
+        """
+        models.TestModel.objects.sync([
+            models.TestModel(int_field=1), models.TestModel(int_field=3),
+            models.TestModel(int_field=4)
+        ], ['int_field'], ['float_field'])
+        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
+
+    def test_existing_objs_all_deleted(self):
+        """
+        Tests when there are existing objects that will all be deleted.
+        """
+        extant_obj1 = G(models.TestModel, int_field=1)
+        extant_obj2 = G(models.TestModel, int_field=2)
+        extant_obj3 = G(models.TestModel, int_field=3)
+
+        models.TestModel.objects.sync2([
+            models.TestModel(int_field=4), models.TestModel(int_field=5), models.TestModel(int_field=6)
+        ], ['int_field'], ['float_field'])
+
+        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=5).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=6).exists())
+
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj1.id)
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj2.id)
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj3.id)
+
+    def test_existing_objs_all_deleted_empty_sync(self):
+        """
+        Tests when there are existing objects deleted because of an emtpy sync.
+        """
+        extant_obj1 = G(models.TestModel, int_field=1)
+        extant_obj2 = G(models.TestModel, int_field=2)
+        extant_obj3 = G(models.TestModel, int_field=3)
+
+        models.TestModel.objects.sync2([], ['int_field'], ['float_field'])
+
+        self.assertEquals(models.TestModel.objects.count(), 0)
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj1.id)
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj2.id)
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj3.id)
+
+    def test_existing_objs_some_deleted(self):
+        """
+        Tests when some existing objects will be deleted.
+        """
+        extant_obj1 = G(models.TestModel, int_field=1, float_field=1)
+        extant_obj2 = G(models.TestModel, int_field=2, float_field=1)
+        extant_obj3 = G(models.TestModel, int_field=3, float_field=1)
+
+        models.TestModel.objects.sync2([
+            models.TestModel(int_field=3, float_field=2), models.TestModel(int_field=4, float_field=2),
+            models.TestModel(int_field=5, float_field=2)
+        ], ['int_field'], ['float_field'])
+
+        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=5).exists())
+
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj1.id)
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj2.id)
+        test_model = models.TestModel.objects.get(id=extant_obj3.id)
+        self.assertEquals(test_model.int_field, 3)
+
+    def test_existing_objs_some_deleted_w_queryset(self):
+        """
+        Tests when some existing objects will be deleted on a queryset
+        """
+        extant_obj0 = G(models.TestModel, int_field=0, float_field=1)
+        extant_obj1 = G(models.TestModel, int_field=1, float_field=1)
+        extant_obj2 = G(models.TestModel, int_field=2, float_field=1)
+        extant_obj3 = G(models.TestModel, int_field=3, float_field=1)
+        extant_obj4 = G(models.TestModel, int_field=4, float_field=0)
+
+        models.TestModel.objects.filter(int_field__lt=4).sync2([
+            models.TestModel(int_field=1, float_field=2), models.TestModel(int_field=2, float_field=2),
+            models.TestModel(int_field=3, float_field=2)
+        ], ['int_field'], ['float_field'])
+
+        self.assertEquals(models.TestModel.objects.count(), 4)
+        self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=2).exists())
+        self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
+
+        with self.assertRaises(models.TestModel.DoesNotExist):
+            models.TestModel.objects.get(id=extant_obj0.id)
+
+        test_model = models.TestModel.objects.get(id=extant_obj1.id)
+        self.assertEquals(test_model.float_field, 2)
+        test_model = models.TestModel.objects.get(id=extant_obj2.id)
+        self.assertEquals(test_model.float_field, 2)
+        test_model = models.TestModel.objects.get(id=extant_obj3.id)
+        self.assertEquals(test_model.float_field, 2)
+        test_model = models.TestModel.objects.get(id=extant_obj4.id)
+        self.assertEquals(test_model.float_field, 0)
+
+
 class BulkUpsertTest(TestCase):
     """
     Tests the bulk_upsert function.
@@ -1112,7 +1254,6 @@ class BulkUpsert2Test(TestCase):
             self.assertEqual(model_obj.char_field, '-1')
 
 
-
 class PostBulkOperationSignalTest(TestCase):
     """
     Tests that the post_bulk_operation signal is emitted on all functions that emit the signal.
@@ -1169,6 +1310,16 @@ class PostBulkOperationSignalTest(TestCase):
         """
         model_obj = models.TestModel.objects.create(int_field=2)
         models.TestModel.objects.bulk_update([model_obj], ['int_field'])
+
+        self.assertEquals(self.signal_handler.model, models.TestModel)
+        self.assertEquals(self.signal_handler.num_times_called, 1)
+
+    def test_post_bulk_operation_bulk_upsert2(self):
+        """
+        Tests that the bulk_upsert2 operation emits the post_bulk_operation signal.
+        """
+        model_obj = models.TestModel.objects.create(int_field=2)
+        models.TestModel.objects.bulk_upsert2([model_obj], ['int_field'])
 
         self.assertEquals(self.signal_handler.model, models.TestModel)
         self.assertEquals(self.signal_handler.num_times_called, 1)

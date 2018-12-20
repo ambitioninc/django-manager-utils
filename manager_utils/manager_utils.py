@@ -394,8 +394,8 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
             fields in the list. Return values are split in a tuple of created, updated, and
             deleted models.
     """
-    created, updated, deleted = upsert2.upsert2(queryset, model_objs, unique_fields,
-                                                update_fields=update_fields, returning=returning, sync=True)
+    created, updated, deleted = upsert2.upsert(queryset, model_objs, unique_fields,
+                                               update_fields=update_fields, returning=returning, sync=True)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
     return created, updated, deleted
 
@@ -644,6 +644,9 @@ class ManagerUtilsMixin(object):
 
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, native=native)
+
+    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False):
+        return sync2(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning)
 
     def bulk_update(self, model_objs, fields_to_update):
         return bulk_update(self.get_queryset(), model_objs, fields_to_update)

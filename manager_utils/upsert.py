@@ -14,13 +14,13 @@ def _quote(field):
 def _get_update_fields(model, uniques, to_update):
     """The fields to be updated in an upsert
 
-    Always exclude auto_now_add, id, and unique fields in an update
+    Always exclude auto_now_add, auto_created fields, and unique fields in an update
     """
     if to_update is None:
-        exclude = ['id'] + list(uniques)
+        exclude = list(uniques)
         to_update = [
             field.attname for field in model._meta.fields
-            if field.attname not in exclude and not getattr(field, 'auto_now_add', False)
+            if field.attname not in exclude and not getattr(field, 'auto_now_add', False) and not field.auto_created
         ]
 
     return to_update
@@ -68,7 +68,7 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     # Use all fields except pk unless the uniqueness constraint is the pk field
     all_fields = [
         field for field in model._meta.fields
-        if field.column != model._meta.pk.name
+        if field.column != model._meta.pk.name or not field.auto_created
     ]
 
     all_field_names = [field.column for field in all_fields]
@@ -156,16 +156,17 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
                 nt_result = namedtuple('Result', [col[0] for col in cursor.description])
                 upserted = [nt_result(*row) for row in cursor.fetchall()]
 
+    pk_field = model._meta.pk.name
     if sync:
-        orig_ids = frozenset(queryset.values_list('id', flat=True))
-        deleted = list(orig_ids - frozenset([r.id for r in upserted]))
+        orig_ids = frozenset(queryset.values_list(pk_field, flat=True))
+        deleted = list(orig_ids - frozenset([getattr(r, pk_field) for r in upserted]))
         model.objects.filter(pk__in=deleted).delete()
 
-    nt_deleted_result = namedtuple('DeletedResult', ['id'])
+    nt_deleted_result = namedtuple('DeletedResult', [model._meta.pk.name])
     return (
         [r for r in upserted if r.inserted_],
         [r for r in upserted if not r.inserted_],
-        [nt_deleted_result(id=d) for d in deleted]
+        [nt_deleted_result(**{pk_field: d}) for d in deleted]
     )
 
 
@@ -199,7 +200,7 @@ def upsert(queryset, model_objs, unique_fields,
 
     if sync and returning is not True:
         returning = set(returning) if returning else set()
-        returning.add('id')
+        returning.add(model._meta.pk.name)
 
     return _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync)
 
