@@ -770,104 +770,30 @@ class BulkUpsert2Test(TestCase):
             self.assertIsNotNone(test_model.id)
         self.assertEquals(models.TestModel.objects.count(), 3)
 
-    def test_return_created_values_native(self):
-        """
-        Tests that values that are created are returned properly when return_upserts is True.
-        """
-        return_values = models.TestModel.objects.bulk_upsert(
-            [models.TestModel(int_field=1), models.TestModel(int_field=3), models.TestModel(int_field=4)],
-            ['int_field'], ['float_field'], return_upserts=True, native=True
-        )
-
-        self.assertEquals(len(return_values), 3)
-        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
-            self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 3)
-
     def test_return_created_updated_values(self):
         """
         Tests returning values when the items are either updated or created.
         """
         # Create an item that will be updated
         G(models.TestModel, int_field=2, float_field=1.0)
-        return_values = models.TestModel.objects.bulk_upsert(
+        created, updated = models.TestModel.objects.bulk_upsert2(
             [
                 models.TestModel(int_field=1, float_field=3.0), models.TestModel(int_field=2.0, float_field=3.0),
                 models.TestModel(int_field=3, float_field=3.0), models.TestModel(int_field=4, float_field=3.0)
             ],
-            ['int_field'], ['float_field'], return_upserts=True)
+            ['int_field'], ['float_field'], returning=True)
 
-        self.assertEquals(len(return_values), 4)
-        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
+        self.assertEquals(len(created), 3)
+        self.assertEquals(len(updated), 1)
+        for test_model, expected_int in zip(sorted(created, key=lambda k: k.int_field), [1, 3, 4]):
             self.assertEquals(test_model.int_field, expected_int)
             self.assertAlmostEquals(test_model.float_field, 3.0)
             self.assertIsNotNone(test_model.id)
+
+        self.assertEquals(updated[0].int_field, 2)
+        self.assertAlmostEquals(updated[0].float_field, 3.0)
+        self.assertIsNotNone(updated[0].id)
         self.assertEquals(models.TestModel.objects.count(), 4)
-
-    def test_return_created_updated_values_native(self):
-        """
-        Tests returning values when the items are either updated or created.
-        """
-        # Create an item that will be updated
-        G(models.TestModel, int_field=2, float_field=1.0)
-        model_objects = [
-            models.TestModel(int_field=1, float_field=3.0),
-            models.TestModel(int_field=2.0, float_field=3.0),
-            models.TestModel(int_field=3, float_field=3.0),
-            models.TestModel(int_field=4, float_field=3.0)
-        ]
-        return_values = models.TestModel.objects.bulk_upsert(
-            model_objects,
-            ['int_field'],
-            ['float_field'],
-            return_upserts=True,
-            native=True
-        )
-
-        self.assertEquals(len(return_values), 4)
-        for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
-            self.assertAlmostEquals(test_model.float_field, 3.0)
-            self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 4)
-
-    def test_return_created_updated_values_distinct(self):
-        """
-        Tests returning distinct sets of values when the items are either updated or created.
-        """
-        # Create an item that will be updated
-        G(models.TestModel, int_field=2, float_field=1.0)
-        model_objects = [
-            models.TestModel(int_field=1, float_field=3.0),
-            models.TestModel(int_field=2.0, float_field=3.0),
-            models.TestModel(int_field=3, float_field=3.0),
-            models.TestModel(int_field=4, float_field=3.0)
-        ]
-        updated, created = models.TestModel.objects.bulk_upsert(
-            model_objects, ['int_field'], ['float_field'], return_upserts_distinct=True)
-        self.assertEquals(
-            [(2, 3.0)],
-            [
-                (obj.int_field, obj.float_field)
-                for obj in sorted(updated, key=lambda k: k.int_field)
-            ]
-        )
-        self.assertEquals(
-            [(1, 3.0), (3, 3.0), (4, 3.0)],
-            [
-                (obj.int_field, obj.float_field)
-                for obj in sorted(created, key=lambda k: k.int_field)
-            ]
-        )
-
-    def test_wo_unique_fields(self):
-        """
-        Tests bulk_upsert with no unique fields. A ValueError should be raised since it is required to provide a
-        list of unique_fields.
-        """
-        with self.assertRaises(ValueError):
-            models.TestModel.objects.bulk_upsert([], [], ['field'])
 
     def test_wo_update_fields(self):
         """
@@ -875,54 +801,25 @@ class BulkUpsert2Test(TestCase):
         models that do not already exist.
         """
         # Create models that already exist
-        G(models.TestModel, int_field=1)
-        G(models.TestModel, int_field=2)
+        G(models.TestModel, int_field=1, float_field=1)
+        G(models.TestModel, int_field=2, float_field=2)
         # Perform a bulk_upsert with one new model
-        models.TestModel.objects.bulk_upsert([
-            models.TestModel(int_field=1), models.TestModel(int_field=2), models.TestModel(int_field=3)
-        ], ['int_field'])
-        # Three objects should now exist
+        models.TestModel.objects.bulk_upsert2([
+            models.TestModel(int_field=1, float_field=3),
+            models.TestModel(int_field=2, float_field=3),
+            models.TestModel(int_field=3, float_field=3)
+        ], ['int_field'], update_fields=[])
+        # Three objects should now exist, but no float fields should be updated
         self.assertEquals(models.TestModel.objects.count(), 3)
         for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
             self.assertEquals(test_model.int_field, expected_int_value)
-
-    def test_wo_update_fields_native(self):
-        """
-        Tests bulk_upsert with no update fields. This function in turn should just do a bulk create for any
-        models that do not already exist.
-        """
-        # Create models that already exist
-        G(models.TestModel, int_field=1)
-        G(models.TestModel, int_field=2)
-        # Perform a bulk_upsert with one new model
-        models.TestModel.objects.bulk_upsert(
-            [
-                models.TestModel(int_field=1), models.TestModel(int_field=2), models.TestModel(int_field=3)
-            ],
-            ['int_field'],
-            native=True
-        )
-        # Three objects should now exist
-        self.assertEquals(models.TestModel.objects.count(), 3)
-        for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
-            self.assertEquals(test_model.int_field, expected_int_value)
+            self.assertEquals(test_model.float_field, expected_int_value)
 
     def test_w_blank_arguments(self):
         """
         Tests using required arguments and using blank arguments for everything else.
         """
-        models.TestModel.objects.bulk_upsert([], ['field'], ['field'])
-        self.assertEquals(models.TestModel.objects.count(), 0)
-
-        # Test native
-        models.TestModel.objects.bulk_upsert([], ['field'], ['field'], native=True)
-        self.assertEquals(models.TestModel.objects.count(), 0)
-
-    def test_w_blank_arguments_native(self):
-        """
-        Tests using required arguments and using blank arguments for everything else.
-        """
-        models.TestModel.objects.bulk_upsert([], ['field'], ['field'], native=True)
+        models.TestModel.objects.bulk_upsert2([], ['field'], ['field'])
         self.assertEquals(models.TestModel.objects.count(), 0)
 
     def test_no_updates(self):
@@ -940,21 +837,6 @@ class BulkUpsert2Test(TestCase):
             self.assertEqual(model_obj.char_field, str(i))
             self.assertAlmostEqual(model_obj.float_field, i)
 
-    def test_no_updates_native(self):
-        """
-        Tests the case when no updates were previously stored (i.e objects are only created)
-        """
-        models.TestModel.objects.bulk_upsert([
-            models.TestModel(int_field=0, char_field='0', float_field=0),
-            models.TestModel(int_field=1, char_field='1', float_field=1),
-            models.TestModel(int_field=2, char_field='2', float_field=2),
-        ], ['int_field'], ['char_field', 'float_field'], native=True)
-
-        for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
-            self.assertEqual(model_obj.int_field, i)
-            self.assertEqual(model_obj.char_field, str(i))
-            self.assertAlmostEqual(model_obj.float_field, i)
-
     def test_all_updates_unique_int_field(self):
         """
         Tests the case when all updates were previously stored and the int field is used as a uniqueness
@@ -965,34 +847,11 @@ class BulkUpsert2Test(TestCase):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
 
         # Update using the int field as a uniqueness constraint
-        models.TestModel.objects.bulk_upsert([
+        models.TestModel.objects.bulk_upsert2([
             models.TestModel(int_field=0, char_field='0', float_field=0),
             models.TestModel(int_field=1, char_field='1', float_field=1),
             models.TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], ['char_field', 'float_field'])
-
-        # Verify that the fields were updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
-        for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
-            self.assertEqual(model_obj.int_field, i)
-            self.assertEqual(model_obj.char_field, str(i))
-            self.assertAlmostEqual(model_obj.float_field, i)
-
-    def test_all_updates_unique_int_field_native(self):
-        """
-        Tests the case when all updates were previously stored and the int field is used as a uniqueness
-        constraint.
-        """
-        # Create previously stored test models with a unique int field and -1 for all other fields
-        for i in range(3):
-            G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-
-        # Update using the int field as a uniqueness constraint
-        models.TestModel.objects.bulk_upsert([
-            models.TestModel(int_field=0, char_field='0', float_field=0),
-            models.TestModel(int_field=1, char_field='1', float_field=1),
-            models.TestModel(int_field=2, char_field='2', float_field=2),
-        ], ['int_field'], ['char_field', 'float_field'], native=True)
 
         # Verify that the fields were updated
         self.assertEquals(models.TestModel.objects.count(), 3)
@@ -1011,34 +870,11 @@ class BulkUpsert2Test(TestCase):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
 
         # Update using the int field as a uniqueness constraint
-        models.TestModel.objects.bulk_upsert([
+        models.TestModel.objects.bulk_upsert2([
             models.TestModel(int_field=0, char_field='0', float_field=0),
             models.TestModel(int_field=1, char_field='1', float_field=1),
             models.TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], update_fields=['float_field'])
-
-        # Verify that the float field was updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
-        for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
-            self.assertEqual(model_obj.int_field, i)
-            self.assertEqual(model_obj.char_field, '-1')
-            self.assertAlmostEqual(model_obj.float_field, i)
-
-    def test_all_updates_unique_int_field_update_float_field_native(self):
-        """
-        Tests the case when all updates were previously stored and the int field is used as a uniqueness
-        constraint. Only updates the float field
-        """
-        # Create previously stored test models with a unique int field and -1 for all other fields
-        for i in range(3):
-            G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-
-        # Update using the int field as a uniqueness constraint
-        models.TestModel.objects.bulk_upsert([
-            models.TestModel(int_field=0, char_field='0', float_field=0),
-            models.TestModel(int_field=1, char_field='1', float_field=1),
-            models.TestModel(int_field=2, char_field='2', float_field=2),
-        ], ['int_field'], update_fields=['float_field'], native=True)
 
         # Verify that the float field was updated
         self.assertEquals(models.TestModel.objects.count(), 3)
@@ -1057,7 +893,7 @@ class BulkUpsert2Test(TestCase):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
 
         # Update using the int field as a uniqueness constraint. The first two are updated while the third is created
-        models.TestModel.objects.bulk_upsert([
+        models.TestModel.objects.bulk_upsert2([
             models.TestModel(int_field=0, char_field='0', float_field=0),
             models.TestModel(int_field=1, char_field='1', float_field=1),
             models.TestModel(int_field=2, char_field='2', float_field=2),
