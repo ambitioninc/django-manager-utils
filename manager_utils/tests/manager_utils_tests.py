@@ -928,6 +928,8 @@ class BulkUpsert2Test(TestCase):
         )
 
         self.assertEquals(len(created), 3)
+        with self.assertRaises(AttributeError):
+            created[0].int_field
         self.assertEquals(set([2, 4, 5]), set([m.float_field for m in created]))
 
     def test_return_created_updated_values(self):
