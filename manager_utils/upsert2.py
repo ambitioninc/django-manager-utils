@@ -177,8 +177,8 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
 
     pk_field = model._meta.pk.name
     if sync:
-        orig_ids = frozenset(queryset.values_list(pk_field, flat=True))
-        deleted = list(orig_ids - frozenset([getattr(r, pk_field) for r in upserted]))
+        orig_ids = queryset.values_list(pk_field, flat=True)
+        deleted = set(orig_ids) - {getattr(r, pk_field) for r in upserted}
         model.objects.filter(pk__in=deleted).delete()
 
     nt_deleted_result = namedtuple('DeletedResult', [model._meta.pk.name])
