@@ -5,7 +5,7 @@ from django.db.models.query import QuerySet
 from django.dispatch import Signal
 from querybuilder.query import Query
 
-from manager_utils import upsert2
+from . import upsert2
 
 
 # A signal that is emitted when any bulk operation occurs
