@@ -248,8 +248,7 @@ def bulk_upsert(
         return _get_upserts(queryset, model_objs_to_update, model_objs_to_create, unique_fields)
 
 
-def bulk_upsert2(queryset, model_objs, unique_fields,
-                 update_fields=None, returning=False):
+def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, returning=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -274,7 +273,7 @@ def bulk_upsert2(queryset, model_objs, unique_fields,
 
     Returns:
         Tuple[list]: A tuple of created models and updated models returned from the upsert if
-            ``returning`` is not ``False``
+        ``returning`` is not ``False``
 
     Examples:
 
@@ -393,6 +392,10 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
         returning (bool|List[str]): If True, returns all fields. If a list, only returns
             fields in the list. Return values are split in a tuple of created, updated, and
             deleted models.
+
+    Returns:
+        Tuple[list]: A tuple of created, updated, and deleted models if
+        ``returning`` is not ``False``
     """
     created, updated, deleted = upsert2.upsert(queryset, model_objs, unique_fields,
                                                update_fields=update_fields, returning=returning, sync=True)
@@ -404,7 +407,7 @@ def get_or_none(queryset, **query_params):
     """
     Get an object or return None if it doesn't exist.
 
-    :param **query_params: The query parameters used in the lookup.
+    :param \*\*query_params: The query parameters used in the lookup.
 
     :returns: A model object if one exists with the query params, None otherwise.
 
@@ -519,7 +522,7 @@ def upsert(manager, defaults=None, updates=None, **kwargs):
     :param updates: These values are updated when the object is updated. They also override any
             values provided in the defaults when inserting the object.
 
-    :param **kwargs: These values provide the arguments used when checking for the existence of
+    :param \*\*kwargs: These values provide the arguments used when checking for the existence of
             the object. They are used in a similar manner to Django's get_or_create function.
 
     :returns: A tuple of the upserted object and a Boolean that is True if it was created (False otherwise)

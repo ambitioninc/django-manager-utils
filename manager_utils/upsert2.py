@@ -12,7 +12,8 @@ def _quote(field):
 
 
 def _get_update_fields(model, uniques, to_update):
-    """The fields to be updated in an upsert
+    """
+    Get the fields to be updated in an upsert.
 
     Always exclude auto_now_add, auto_created fields, and unique fields in an update
     """
@@ -56,7 +57,8 @@ def _fill_auto_fields(model, values):
 
 
 def _sort_by_unique_fields(model, model_objs, unique_fields):
-    """Sort a list of models by their unique fields
+    """
+    Sort a list of models by their unique fields.
 
     Sorting models in an upsert greatly reduces the chances of deadlock
     when doing concurrent upserts
@@ -162,7 +164,9 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
 
 
 def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
-    """Perfom the upsert and do an optional sync operation"""
+    """
+    Perfom the upsert and do an optional sync operation
+    """
     model = queryset.model
     upserted = []
     deleted = []
@@ -189,9 +193,12 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
     )
 
 
-def upsert(queryset, model_objs, unique_fields,
-           update_fields=None, returning=False, sync=False):
-    """Does a bulk upsert on a table.
+def upsert(
+    queryset, model_objs, unique_fields,
+    update_fields=None, returning=False, sync=False
+):
+    """
+    Perform a bulk upsert on a table, optionally syncing the results.
 
     Args:
         queryset (Model|QuerySet): A model or a queryset that defines the collection to sync
