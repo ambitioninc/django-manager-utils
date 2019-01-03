@@ -18,6 +18,32 @@ class TestModel(models.Model):
         unique_together = ('int_field', 'char_field')
 
 
+class TestUniqueTzModel(models.Model):
+    """
+    A model for testing manager utils with a timezone field as the uniqueness constraint.
+    """
+    int_field = models.IntegerField(null=True, unique=True)
+    char_field = models.CharField(max_length=128, null=True)
+    float_field = models.FloatField(null=True)
+    time_zone = TimeZoneField(unique=True)
+
+    objects = ManagerUtilsManager()
+
+    class Meta:
+        unique_together = ('int_field', 'char_field')
+
+
+class TestAutoDateTimeModel(models.Model):
+    """
+    A model to test that upserts work with auto_now and auto_now_add
+    """
+    int_field = models.IntegerField(unique=True)
+    auto_now_field = models.DateTimeField(auto_now=True)
+    auto_now_add_field = models.DateTimeField(auto_now_add=True)
+
+    objects = ManagerUtilsManager()
+
+
 class TestForeignKeyModel(models.Model):
     """
     A test model that has a foreign key.

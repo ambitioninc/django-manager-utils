@@ -9,6 +9,6 @@ and :doc:`API documentation <ref/method-documentation>`
 Requirements
 ------------
 
-* Django >= 1.6.5
+* Django >= 1.10
 * Python 2.7+
-* Python 3.3, 3,4
+* Python 3.4, 3.5, 3.6

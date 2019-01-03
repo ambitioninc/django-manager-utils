@@ -45,6 +45,7 @@ setup(
     ],
     tests_require=[
         'coverage',
+        'freezegun',
         'mock',
         'psycopg2',
         'django-nose>=1.3',

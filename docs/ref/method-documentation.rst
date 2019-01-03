@@ -25,6 +25,11 @@ bulk_upsert
 
 .. autofunction:: manager_utils.manager_utils.bulk_upsert
 
+bulk_upsert2
+------------
+
+.. autofunction:: manager_utils.manager_utils.bulk_upsert2
+
 bulk_update
 -----------
 
@@ -34,6 +39,11 @@ sync
 ----
 
 .. autofunction:: manager_utils.manager_utils.sync
+
+sync2
+-----
+
+.. autofunction:: manager_utils.manager_utils.sync2
 
 id_dict
 -------
