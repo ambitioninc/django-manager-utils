@@ -77,7 +77,8 @@ def _sort_by_unique_fields(model, model_objs, unique_fields):
     return sorted(model_objs, key=sort_key)
 
 
-def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning):
+def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
+                    ignore_duplicate_updates=False):
     """
     Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
     INSERT INTO table_name (field1, field2)
@@ -138,32 +139,42 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
                                                                              action_sql=action_sql)
 
     if update_fields:
+        ignore_duplicates_sql = (
+            ' WHERE ( ' +
+            ', '.join(f'{model._meta.db_table}.{_quote(field.column)}' for field in update_fields) +
+            ' ) ' +
+            ' IS DISTINCT FROM ( ' +
+            ', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields) +
+            ' )'
+        ) if ignore_duplicate_updates else ''
+
         sql = (
-            'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4} {5}'
+            'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4} {5} {6}'
         ).format(
             model._meta.db_table,
             all_field_names_sql,
             row_values_sql,
             unique_field_names_sql,
             update_fields_sql,
+            ignore_duplicates_sql,
             return_sql
         )
     else:
         sql = (
-            'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} {5}'
+            'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO NOTHING {4}'
         ).format(
             model._meta.db_table,
             all_field_names_sql,
             row_values_sql,
             unique_field_names_sql,
-            'DO UPDATE SET {0}=EXCLUDED.{0}'.format(unique_fields[0].column),
             return_sql
         )
 
     return sql, sql_args
 
 
-def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
+def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
+           ignore_duplicate_updates=False):
     """
     Perfom the upsert and do an optional sync operation
     """
@@ -171,7 +182,8 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
     upserted = []
     deleted = []
     if model_objs:
-        sql, sql_args = _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning)
+        sql, sql_args = _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
+                                        ignore_duplicate_updates=ignore_duplicate_updates)
 
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_args)
@@ -195,7 +207,9 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync):
 
 def upsert(
     queryset, model_objs, unique_fields,
-    update_fields=None, returning=False, sync=False
+    update_fields=None, returning=False, sync=False,
+    ignore_duplicate_updates=False,
+    return_untouched=False
 ):
     """
     Perform a bulk upsert on a table, optionally syncing the results.
@@ -213,6 +227,9 @@ def upsert(
         returning (bool|List[str]): If True, returns all fields. If a list, only returns
             fields in the list
         sync (bool, default=False): Perform a sync operation on the queryset
+        ignore_duplicate_updates (bool, default=False): Don't perform an update if the row is
+            a duplicate.
+        return_untouched (bool, default=False): Return untouched rows by the operation
     """
     queryset = queryset if isinstance(queryset, models.QuerySet) else queryset.objects.all()
     model = queryset.model
@@ -228,4 +245,5 @@ def upsert(
         returning = set(returning) if returning else set()
         returning.add(model._meta.pk.name)
 
-    return _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync)
+    return _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
+                  ignore_duplicate_updates=ignore_duplicate_updates)

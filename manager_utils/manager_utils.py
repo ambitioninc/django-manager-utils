@@ -248,7 +248,7 @@ def bulk_upsert(
         return _get_upserts(queryset, model_objs_to_update, model_objs_to_create, unique_fields)
 
 
-def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, returning=False):
+def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=False):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -270,6 +270,8 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
             insert on the objects that don't exist. If ``None``, all fields will be updated.
         returning (bool|List[str]): If ``True``, returns all fields. If a list, only returns
             fields in the list. Return values are split in a tuple of created and updated models
+        ignore_duplicate_updates (bool, default=False): Ignore updating a row in the upsert if all of the update fields
+            are duplicates
 
     Returns:
         Tuple[list]: A tuple of created models and updated models returned from the upsert if
@@ -343,7 +345,8 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
         4
     """
     created, updated, _ = upsert2.upsert(queryset, model_objs, unique_fields,
-                                         update_fields=update_fields, returning=returning)
+                                         update_fields=update_fields, returning=returning,
+                                         ignore_duplicate_updates=ignore_duplicate_updates)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
     return created, updated
 
@@ -589,9 +592,10 @@ class ManagerUtilsQuerySet(QuerySet):
             self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, native=native
         )
 
-    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False):
+    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=False):
         return bulk_upsert2(self, model_objs, unique_fields,
-                            update_fields=update_fields, returning=returning)
+                            update_fields=update_fields, returning=returning,
+                            ignore_duplicate_updates=ignore_duplicate_updates)
 
     def bulk_create(self, *args, **kwargs):
         """
@@ -641,9 +645,9 @@ class ManagerUtilsMixin(object):
             self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts,
             return_upserts_distinct=return_upserts_distinct, native=native)
 
-    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False):
+    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=False):
         return bulk_upsert2(self.get_queryset(), model_objs, unique_fields,
-                            update_fields=update_fields, returning=returning)
+                            update_fields=update_fields, returning=returning, ignore_duplicate_updates=ignore_duplicate_updates)
 
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, native=native)
