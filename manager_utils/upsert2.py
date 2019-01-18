@@ -77,8 +77,33 @@ def _sort_by_unique_fields(model, model_objs, unique_fields):
     return sorted(model_objs, key=sort_key)
 
 
+def _get_values_for_row(model_obj, all_fields):
+    return [
+        # Convert field value to db value
+        # Use attname here to support fields with custom db_column names
+        field.get_db_prep_save(getattr(model_obj, field.attname), connection)
+        for field in all_fields
+    ]
+   
+
+def _get_values_for_rows(model_objs, all_fields):
+    row_values = []
+    sql_args = []
+
+    for i, model_obj in enumerate(model_objs):
+        sql_args.extend(_get_values_for_row(model_obj, all_fields))
+        if i == 0:
+            row_values.append('({0})'.format(
+                ', '.join([f'%s::{f.db_type(connection)}' for f in all_fields]))
+            )
+        else:
+            row_values.append('({0})'.format(', '.join(['%s'] * len(all_fields))))
+
+    return row_values, sql_args
+
+
 def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
-                    ignore_duplicate_updates=False):
+                    ignore_duplicate_updates=False, return_untouched=False):
     """
     Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
     INSERT INTO table_name (field1, field2)
@@ -106,6 +131,9 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
         for update_field in update_fields
     ]
 
+    for field in update_fields:
+        print('type', field.db_type(connection))
+
     unique_field_names_sql = ', '.join([
         _quote(field.column) for field in unique_fields
     ])
@@ -114,18 +142,7 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
         for field in update_fields
     ])
 
-    row_values = []
-    sql_args = []
-
-    for model_obj in model_objs:
-        placeholders = []
-        for field in all_fields:
-            # Convert field value to db value
-            # Use attname here to support fields with custom db_column names
-            sql_args.append(field.get_db_prep_save(getattr(model_obj, field.attname),
-                                                   connection))
-            placeholders.append('%s')
-        row_values.append('({0})'.format(', '.join(placeholders)))
+    row_values, sql_args = _get_values_for_rows(model_objs, all_fields)
     row_values_sql = ', '.join(row_values)
 
     return_sql = ''
@@ -174,7 +191,7 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
 
 
 def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
-           ignore_duplicate_updates=False):
+           ignore_duplicate_updates=False, return_untouched=False):
     """
     Perfom the upsert and do an optional sync operation
     """
@@ -246,4 +263,5 @@ def upsert(
         returning.add(model._meta.pk.name)
 
     return _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
-                  ignore_duplicate_updates=ignore_duplicate_updates)
+                  ignore_duplicate_updates=ignore_duplicate_updates,
+                  return_untouched=return_untouched)
