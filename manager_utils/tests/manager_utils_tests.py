@@ -1172,6 +1172,33 @@ class BulkUpsert2Test(TestCase):
         self.assertEquals(list(results.updated)[0].char_field, '0')
         self.assertEquals(list(results.created)[0].char_field, '3')
 
+    def test_update_duplicate_fields_returning_some_updated_return_untouched(self):
+        """
+        Tests the case when all updates were previously stored and the upsert tries to update the rows
+        with duplicate values. Test when some aren't duplicates and return untouched results.
+        There will be no untouched results in this test since we turn off ignoring duplicate
+        updates
+        """
+        # Create previously stored test models with a unique int field and -1 for all other fields
+        for i in range(3):
+            G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
+
+        # Update using the int field as a uniqueness constraint
+        results = models.TestModel.objects.bulk_upsert2(
+            [
+                models.TestModel(int_field=0, char_field='-1', float_field=-1),
+                models.TestModel(int_field=1, char_field='-1', float_field=-1),
+                models.TestModel(int_field=2, char_field='0', float_field=-1),
+                models.TestModel(int_field=3, char_field='3', float_field=3),
+            ],
+            ['int_field'], ['char_field', 'float_field'],
+            returning=['char_field'], ignore_duplicate_updates=False, return_untouched=True)
+
+        self.assertEquals(len(list(results.untouched)), 0)
+        self.assertEquals(len(list(results.updated)), 3)
+        self.assertEquals(len(list(results.created)), 1)
+        self.assertEquals(list(results.created)[0].char_field, '3')
+
     def test_all_updates_unique_int_field(self):
         """
         Tests the case when all updates were previously stored and the int field is used as a uniqueness

@@ -177,7 +177,6 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     ])
 
     row_values, sql_args = _get_values_for_rows(model_objs, all_fields)
-    row_values_sql = ', '.join(row_values)
 
     return_sql = 'RETURNING ' + _get_return_fields_sql(returning, return_status=True) if returning else ''
     ignore_duplicates_sql = ''
@@ -194,12 +193,16 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     )
 
     if return_untouched:
+        row_values_sql = ', '.join([
+            '(\'{0}\', {1})'.format(i, row_value[1:-1])
+            for i, row_value in enumerate(row_values)
+        ])
         sql = (
-            ' WITH input_rows({all_field_names_sql}) AS ('
+            ' WITH input_rows("temp_id_", {all_field_names_sql}) AS ('
             '     VALUES {row_values_sql}'
             ' ), ins AS ( '
             '     INSERT INTO {table_name} ({all_field_names_sql})'
-            '     SELECT * from input_rows'
+            '     SELECT {all_field_names_sql} FROM input_rows ORDER BY temp_id_'
             '     ON CONFLICT ({unique_field_names_sql}) {on_conflict} {return_sql}'
             ' )'
             ' SELECT DISTINCT ON ({table_pk_name}) * FROM ('
@@ -209,7 +212,8 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
             '     SELECT \'n\' AS status_, {aliased_return_fields_sql}'
             '     FROM input_rows'
             '     JOIN {table_name} c USING ({unique_field_names_sql})'
-            ' ) as distinct_results'
+            ' ) as results'
+            ' ORDER BY results."{table_pk_name}", CASE WHEN(status_ = \'n\') THEN 1 ELSE 0 END;'
         ).format(
             all_field_names_sql=all_field_names_sql,
             row_values_sql=row_values_sql,
@@ -222,6 +226,7 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
             aliased_return_fields_sql=_get_return_fields_sql(returning, alias='c')
         )
     else:
+        row_values_sql = ', '.join(row_values)
         sql = (
             ' INSERT INTO {table_name} ({all_field_names_sql})'
             ' VALUES {row_values_sql}'
