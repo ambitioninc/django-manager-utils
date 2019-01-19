@@ -108,7 +108,7 @@ def _get_values_for_row(model_obj, all_fields):
         field.get_db_prep_save(getattr(model_obj, field.attname), connection)
         for field in all_fields
     ]
-   
+
 
 def _get_values_for_rows(model_objs, all_fields):
     row_values = []
@@ -189,7 +189,9 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
             excluded_update_fields_sql=', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields)
         )
 
-    on_conflict = 'DO UPDATE SET {0} {1}'.format(update_fields_sql, ignore_duplicates_sql) if update_fields else 'DO NOTHING'
+    on_conflict = (
+        'DO UPDATE SET {0} {1}'.format(update_fields_sql, ignore_duplicates_sql) if update_fields else 'DO NOTHING'
+    )
 
     if return_untouched:
         sql = (

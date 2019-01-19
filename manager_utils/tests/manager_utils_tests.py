@@ -1096,10 +1096,8 @@ class BulkUpsert2Test(TestCase):
         constraint. This test does not update any fields
         """
         # Create previously stored test models with a unique int field and -1 for all other fields
-        test_models = [
+        for i in range(3):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-            for i in range(3)
-        ]
 
         # Update using the int field as a uniqueness constraint
         results = models.TestModel.objects.bulk_upsert2([
@@ -1116,10 +1114,8 @@ class BulkUpsert2Test(TestCase):
         with duplicate values.
         """
         # Create previously stored test models with a unique int field and -1 for all other fields
-        test_models = [
+        for i in range(3):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-            for i in range(3)
-        ]
 
         # Update using the int field as a uniqueness constraint
         results = models.TestModel.objects.bulk_upsert2([
@@ -1136,10 +1132,8 @@ class BulkUpsert2Test(TestCase):
         with duplicate values. Test when some aren't duplicates
         """
         # Create previously stored test models with a unique int field and -1 for all other fields
-        test_models = [
+        for i in range(3):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-            for i in range(3)
-        ]
 
         # Update using the int field as a uniqueness constraint
         results = models.TestModel.objects.bulk_upsert2([
@@ -1158,10 +1152,8 @@ class BulkUpsert2Test(TestCase):
         with duplicate values. Test when some aren't duplicates
         """
         # Create previously stored test models with a unique int field and -1 for all other fields
-        test_models = [
+        for i in range(3):
             G(models.TestModel, int_field=i, char_field='-1', float_field=-1)
-            for i in range(3)
-        ]
 
         # Update using the int field as a uniqueness constraint
         results = models.TestModel.objects.bulk_upsert2(
