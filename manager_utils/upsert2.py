@@ -7,6 +7,24 @@ from django.db import connection, models
 from django.utils import timezone
 
 
+class UpsertResult(list):
+    @property
+    def created(self):
+        return (i for i in self if i.status_ == 'c')
+
+    @property
+    def updated(self):
+        return (i for i in self if i.status_ == 'u')
+
+    @property
+    def untouched(self):
+        return (i for i in self if i.status_ == 'n')
+
+    @property
+    def deleted(self):
+        return (i for i in self if i.status_ == 'd')
+
+
 def _quote(field):
     return '"{0}"'.format(field)
 
@@ -94,12 +112,26 @@ def _get_values_for_rows(model_objs, all_fields):
         sql_args.extend(_get_values_for_row(model_obj, all_fields))
         if i == 0:
             row_values.append('({0})'.format(
-                ', '.join([f'%s::{f.db_type(connection)}' for f in all_fields]))
+                ', '.join(['%s::{0}'.format(f.db_type(connection)) for f in all_fields]))
             )
         else:
             row_values.append('({0})'.format(', '.join(['%s'] * len(all_fields))))
 
     return row_values, sql_args
+
+
+def _get_return_fields_sql(returning, return_status=False, alias=None):
+    if returning is True:
+        return_fields_sql = '*'
+    elif alias:
+        return_fields_sql = ', '.join('{0}.{1}'.format(alias, _quote(field)) for field in returning)
+    else:
+        return_fields_sql = ', '.join(_quote(field) for field in returning)
+
+    if return_status:
+        return_fields_sql += ', CASE WHEN xmax = 0 THEN \'c\' ELSE \'u\' END AS status_'
+
+    return return_fields_sql
 
 
 def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
@@ -131,9 +163,6 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
         for update_field in update_fields
     ]
 
-    for field in update_fields:
-        print('type', field.db_type(connection))
-
     unique_field_names_sql = ', '.join([
         _quote(field.column) for field in unique_fields
     ])
@@ -145,47 +174,55 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     row_values, sql_args = _get_values_for_rows(model_objs, all_fields)
     row_values_sql = ', '.join(row_values)
 
-    return_sql = ''
-    if returning:
-        action_sql = ', (xmax = 0) AS inserted_'
-        if returning is True:
-            return_sql = 'RETURNING * {action_sql}'.format(action_sql=action_sql)
-        else:
-            return_fields_sql = ', '.join(_quote(field) for field in returning)
-            return_sql = 'RETURNING {return_fields_sql} {action_sql}'.format(return_fields_sql=return_fields_sql,
-                                                                             action_sql=action_sql)
+    return_sql = 'RETURNING ' + _get_return_fields_sql(returning, return_status=True) if returning else ''
+    ignore_duplicates_sql = (
+        ' WHERE ( ' +
+        ', '.join(f'{model._meta.db_table}.{_quote(field.column)}' for field in update_fields) +
+        ' ) ' +
+        ' IS DISTINCT FROM ( ' +
+        ', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields) +
+        ' )'
+    ) if ignore_duplicate_updates else ''
 
-    if update_fields:
-        ignore_duplicates_sql = (
-            ' WHERE ( ' +
-            ', '.join(f'{model._meta.db_table}.{_quote(field.column)}' for field in update_fields) +
-            ' ) ' +
-            ' IS DISTINCT FROM ( ' +
-            ', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields) +
-            ' )'
-        ) if ignore_duplicate_updates else ''
+    on_conflict = 'DO UPDATE SET {0} {1}'.format(update_fields_sql, ignore_duplicates_sql) if update_fields else 'DO NOTHING'
+    upsert_sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} {5}'.format(
+        model._meta.db_table,
+        all_field_names_sql,
+        row_values_sql,
+        unique_field_names_sql,
+        on_conflict,
+        return_sql
+    )
 
+    if return_untouched:
         sql = (
-            'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4} {5} {6}'
+            'WITH input_rows({0}) AS (VALUES {1}), ins AS ( '
+            'INSERT INTO {2} ({3}) SELECT * from input_rows ON CONFLICT ({4}) {5} {6}'
+            ' ) '
+            'SELECT status_, {7} '
+            'FROM   ins '
+            'UNION  ALL '
+            'SELECT \'n\' AS status_, {8} '
+            'FROM input_rows '
+            'JOIN {9} c USING ({10})'
         ).format(
-            model._meta.db_table,
             all_field_names_sql,
             row_values_sql,
+            model._meta.db_table,
+            all_field_names_sql,
             unique_field_names_sql,
-            update_fields_sql,
-            ignore_duplicates_sql,
-            return_sql
+            on_conflict,
+            return_sql,
+            _get_return_fields_sql(returning),
+            _get_return_fields_sql(returning, alias='c'),
+            model._meta.db_table,
+            unique_field_names_sql
         )
+        print(sql, sql_args)
+        print('\n\n')
+        #print(sql % sql_args)
     else:
-        sql = (
-            'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO NOTHING {4}'
-        ).format(
-            model._meta.db_table,
-            all_field_names_sql,
-            row_values_sql,
-            unique_field_names_sql,
-            return_sql
-        )
+        sql = upsert_sql
 
     return sql, sql_args
 
@@ -200,7 +237,8 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
     deleted = []
     if model_objs:
         sql, sql_args = _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
-                                        ignore_duplicate_updates=ignore_duplicate_updates)
+                                        ignore_duplicate_updates=ignore_duplicate_updates,
+                                        return_untouched=return_untouched)
 
         with connection.cursor() as cursor:
             cursor.execute(sql, sql_args)
@@ -214,11 +252,9 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
         deleted = set(orig_ids) - {getattr(r, pk_field) for r in upserted}
         model.objects.filter(pk__in=deleted).delete()
 
-    nt_deleted_result = namedtuple('DeletedResult', [model._meta.pk.name])
-    return (
-        [r for r in upserted if r.inserted_],
-        [r for r in upserted if not r.inserted_],
-        [nt_deleted_result(**{pk_field: d}) for d in deleted]
+    nt_deleted_result = namedtuple('DeletedResult', [model._meta.pk.name, 'status_'])
+    return UpsertResult(
+        upserted + [nt_deleted_result(**{pk_field: d, 'status_': 'd'}) for d in deleted]
     )
 
 

@@ -105,7 +105,7 @@ def bulk_upsert(
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
     If an existing object is matched, it is updated with the values from the provided objects. Objects
-    that don't match anything are bulk inserted.
+    that don't match anything are bulk created.
     A user can provide a list update_fields so that any changed values on those fields will be updated.
     However, if update_fields is not provided, this function reduces down to performing a bulk_create
     on any non extant objects.
@@ -170,7 +170,7 @@ def bulk_upsert(
         3, 3
 
         # Do the exact same operation, but this time add an additional object that is not already
-        # stored. It will be inserted.
+        # stored. It will be created.
         bulk_upsert(TestModel.objects.all(), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -184,7 +184,7 @@ def bulk_upsert(
 
         # Note that one can also do the upsert on a queryset. Perform the same data upsert on a
         # filter for int_field=1. In this case, only one object has the ability to be updated.
-        # All of the other objects will be inserted
+        # All of the other objects will be created
         bulk_upsert(TestModel.objects.filter(int_field=1), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -254,7 +254,7 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
     If an existing object is matched, it is updated with the values from the provided objects. Objects
-    that don't match anything are bulk inserted.
+    that don't match anything are bulk created.
     A user can provide a list update_fields so that any changed values on those fields will be updated.
     However, if update_fields is not provided, this function reduces down to performing a bulk_create
     on any non extant objects.
@@ -276,8 +276,9 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
         return_untouched (bool, default=False): Return values that were not touched by the upsert operation
 
     Returns:
-        Tuple[list]: A tuple of created models and updated models returned from the upsert if
-        ``returning`` is not ``False``
+        UpsertResult: A list of results if ``returning`` is not ``False``. created, updated, and untouched,
+            results can be obtained by accessing the ``created``, ``updated``, and ``untouched`` properties
+            of the result.
 
     Examples:
 
@@ -308,7 +309,7 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
         3, 3
 
         # Do the exact same operation, but this time add an additional object that is not already
-        # stored. It will be inserted.
+        # stored. It will be created.
         bulk_upsert2(TestModel.objects.all(), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -322,7 +323,7 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
 
         # Note that one can also do the upsert on a queryset. Perform the same data upsert on a
         # filter for int_field=1. In this case, only one object has the ability to be updated.
-        # All of the other objects will be inserted
+        # All of the other objects will be created
         bulk_upsert2(TestModel.objects.filter(int_field=1), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -346,11 +347,12 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
         print(len(updated))
         4
     """
-    created, updated, _ = upsert2.upsert(queryset, model_objs, unique_fields,
-                                         update_fields=update_fields, returning=returning,
-                                         ignore_duplicate_updates=ignore_duplicate_updates)
+    results = upsert2.upsert(queryset, model_objs, unique_fields,
+                             update_fields=update_fields, returning=returning,
+                             ignore_duplicate_updates=ignore_duplicate_updates,
+                             return_untouched=return_untouched)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
-    return created, updated
+    return results
 
 
 def sync(queryset, model_objs, unique_fields, update_fields=None, **kwargs):
@@ -399,13 +401,14 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
             deleted models.
 
     Returns:
-        Tuple[list]: A tuple of created, updated, and deleted models if
-        ``returning`` is not ``False``
+        UpsertResult: A list of results if ``returning`` is not ``False``. created, updated, untouched,
+            and deleted results can be obtained by accessing the ``created``, ``updated``, ``untouched``,
+            and ``deleted`` properties of the result.
     """
-    created, updated, deleted = upsert2.upsert(queryset, model_objs, unique_fields,
-                                               update_fields=update_fields, returning=returning, sync=True)
+    results = upsert2.upsert(queryset, model_objs, unique_fields,
+                             update_fields=update_fields, returning=returning, sync=True)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
-    return created, updated, deleted
+    return results
 
 
 def get_or_none(queryset, **query_params):
@@ -519,7 +522,7 @@ def upsert(manager, defaults=None, updates=None, **kwargs):
     Performs an update on an object or an insert if the object does not exist.
 
     :type defaults: dict
-    :param defaults: These values are set when the object is inserted, but are irrelevant
+    :param defaults: These values are set when the object is created, but are irrelevant
             when the object already exists. This field should only be used when values only need to
             be set during creation.
 
