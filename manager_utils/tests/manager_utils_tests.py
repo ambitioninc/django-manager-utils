@@ -308,6 +308,41 @@ class Sync2Test(TestCase):
         test_model = models.TestModel.objects.get(id=extant_obj4.id)
         self.assertEquals(test_model.float_field, 0)
 
+    def test_existing_objs_some_deleted_wo_update(self):
+        """
+        Tests when some existing objects will be deleted on a queryset. Run syncing
+        with no update fields and verify they are untouched in the sync
+        """
+        objs = [G(models.TestModel, int_field=i, float_field=i) for i in range(5)]
+
+        results = models.TestModel.objects.filter(int_field__lt=4).sync2([
+            models.TestModel(int_field=1, float_field=2), models.TestModel(int_field=2, float_field=2),
+            models.TestModel(int_field=3, float_field=2)
+        ], ['int_field'], [], returning=True)
+
+        self.assertEquals(len(list(results)), 4)
+        self.assertEquals(len(list(results.deleted)), 1)
+        self.assertEquals(len(list(results.untouched)), 3)
+        self.assertEquals(list(results.deleted)[0].id, objs[0].id)
+
+    def test_existing_objs_some_deleted_some_updated(self):
+        """
+        Tests when some existing objects will be deleted on a queryset. Run syncing
+        with some update fields.
+        """
+        objs = [G(models.TestModel, int_field=i, float_field=i) for i in range(5)]
+
+        results = models.TestModel.objects.filter(int_field__lt=4).sync2([
+            models.TestModel(int_field=1, float_field=2), models.TestModel(int_field=2, float_field=2),
+            models.TestModel(int_field=3, float_field=2)
+        ], ['int_field'], ['float_field'], returning=True, ignore_duplicate_updates=True)
+
+        self.assertEquals(len(list(results)), 4)
+        self.assertEquals(len(list(results.deleted)), 1)
+        self.assertEquals(len(list(results.updated)), 2)
+        self.assertEquals(len(list(results.untouched)), 1)
+        self.assertEquals(list(results.deleted)[0].id, objs[0].id)
+
 
 class BulkUpsertTest(TestCase):
     """
@@ -1134,14 +1169,16 @@ class BulkUpsert2Test(TestCase):
                 models.TestModel(int_field=0, char_field='-1', float_field=-1),
                 models.TestModel(int_field=1, char_field='-1', float_field=-1),
                 models.TestModel(int_field=2, char_field='0', float_field=-1),
+                models.TestModel(int_field=3, char_field='3', float_field=3),
             ],
             ['int_field'], ['char_field', 'float_field'],
             returning=['char_field'], ignore_duplicate_updates=True, return_untouched=True)
 
-        self.assertEquals(list(results.created), [])
         self.assertEquals(len(list(results.updated)), 1)
         self.assertEquals(len(list(results.untouched)), 2)
+        self.assertEquals(len(list(results.created)), 1)
         self.assertEquals(list(results.updated)[0].char_field, '0')
+        self.assertEquals(list(results.created)[0].char_field, '3')
 
     def test_all_updates_unique_int_field(self):
         """

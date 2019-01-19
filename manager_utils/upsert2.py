@@ -121,9 +121,7 @@ def _get_values_for_rows(model_objs, all_fields):
 
 
 def _get_return_fields_sql(returning, return_status=False, alias=None):
-    if returning is True:
-        return_fields_sql = '*'
-    elif alias:
+    if alias:
         return_fields_sql = ', '.join('{0}.{1}'.format(alias, _quote(field)) for field in returning)
     else:
         return_fields_sql = ', '.join(_quote(field) for field in returning)
@@ -151,6 +149,7 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     ]
 
     all_field_names = [field.column for field in all_fields]
+    returning = returning if returning is not True else [f.column for f in model._meta.fields]
     all_field_names_sql = ', '.join([_quote(field) for field in all_field_names])
 
     # Convert field names to db column names
@@ -185,14 +184,6 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     ) if ignore_duplicate_updates else ''
 
     on_conflict = 'DO UPDATE SET {0} {1}'.format(update_fields_sql, ignore_duplicates_sql) if update_fields else 'DO NOTHING'
-    upsert_sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} {5}'.format(
-        model._meta.db_table,
-        all_field_names_sql,
-        row_values_sql,
-        unique_field_names_sql,
-        on_conflict,
-        return_sql
-    )
 
     if return_untouched:
         sql = (
@@ -222,7 +213,16 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
             unique_field_names_sql
         )
     else:
-        sql = upsert_sql
+        sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} {5}'.format(
+            model._meta.db_table,
+            all_field_names_sql,
+            row_values_sql,
+            unique_field_names_sql,
+            on_conflict,
+            return_sql
+        )
+
+    print(sql)
 
     return sql, sql_args
 
@@ -236,9 +236,11 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
     if (return_untouched or sync) and returning is not True:
         returning = set(returning) if returning else set()
         returning.add(model._meta.pk.name)
-
     upserted = []
     deleted = []
+    # We must return untouched rows when doing a sync operation
+    return_untouched = True if sync else return_untouched
+
     if model_objs:
         sql, sql_args = _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
                                         ignore_duplicate_updates=ignore_duplicate_updates,

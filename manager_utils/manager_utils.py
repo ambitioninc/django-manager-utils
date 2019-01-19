@@ -381,10 +381,13 @@ def sync(queryset, model_objs, unique_fields, update_fields=None, **kwargs):
     return bulk_upsert(queryset, model_objs, unique_fields, update_fields=update_fields, sync=True, **kwargs)
 
 
-def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=False):
+def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=False):
     """
     Performs a sync operation on a queryset, making the contents of the
     queryset match the contents of model_objs.
+
+    Note: The definition of a sync requires that we return untouched rows from the upsert opertion. There is
+    no way to turn off returning untouched rows in a sync.
 
     Args:
         queryset (Model|QuerySet): A model or a queryset that defines the collection to sync
@@ -399,6 +402,8 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
         returning (bool|List[str]): If True, returns all fields. If a list, only returns
             fields in the list. Return values are split in a tuple of created, updated, and
             deleted models.
+        ignore_duplicate_updates (bool, default=False): Ignore updating a row in the upsert if all
+            of the update fields are duplicates
 
     Returns:
         UpsertResult: A list of results if ``returning`` is not ``False``. created, updated, untouched,
@@ -406,7 +411,8 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
             and ``deleted`` properties of the result.
     """
     results = upsert2.upsert(queryset, model_objs, unique_fields,
-                             update_fields=update_fields, returning=returning, sync=True)
+                             update_fields=update_fields, returning=returning, sync=True,
+                             ignore_duplicate_updates=ignore_duplicate_updates)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
     return results
 
@@ -616,8 +622,9 @@ class ManagerUtilsQuerySet(QuerySet):
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self, model_objs, unique_fields, update_fields=update_fields, native=native)
 
-    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False):
-        return sync2(self, model_objs, unique_fields, update_fields=update_fields, returning=returning)
+    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=False):
+        return sync2(self, model_objs, unique_fields, update_fields=update_fields, returning=returning,
+                     ignore_duplicate_updates=ignore_duplicate_updates)
 
     def get_or_none(self, **query_params):
         return get_or_none(self, **query_params)
@@ -661,8 +668,9 @@ class ManagerUtilsMixin(object):
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, native=native)
 
-    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False):
-        return sync2(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning)
+    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=False):
+        return sync2(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning,
+                     ignore_duplicate_updates=ignore_duplicate_updates)
 
     def bulk_update(self, model_objs, fields_to_update):
         return bulk_update(self.get_queryset(), model_objs, fields_to_update)
