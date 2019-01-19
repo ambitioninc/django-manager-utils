@@ -8,6 +8,12 @@ from django.utils import timezone
 
 
 class UpsertResult(list):
+    """
+    Returned by the upsert operation.
+
+    Wraps a list and provides properties to access created, updated,
+    untouched, and deleted elements
+    """
     @property
     def created(self):
         return (i for i in self if i.status_ == 'c')
@@ -133,7 +139,7 @@ def _get_return_fields_sql(returning, return_status=False, alias=None):
 
 
 def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returning,
-                    ignore_duplicate_updates=False, return_untouched=False):
+                    ignore_duplicate_updates=True, return_untouched=False):
     """
     Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
     INSERT INTO table_name (field1, field2)
@@ -174,61 +180,64 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     row_values_sql = ', '.join(row_values)
 
     return_sql = 'RETURNING ' + _get_return_fields_sql(returning, return_status=True) if returning else ''
-    ignore_duplicates_sql = (
-        ' WHERE ( ' +
-        ', '.join(f'{model._meta.db_table}.{_quote(field.column)}' for field in update_fields) +
-        ' ) ' +
-        ' IS DISTINCT FROM ( ' +
-        ', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields) +
-        ' )'
-    ) if ignore_duplicate_updates else ''
+    ignore_duplicates_sql = ''
+    if ignore_duplicate_updates:
+        ignore_duplicates_sql = (
+            ' WHERE ({update_fields_sql}) IS DISTINCT FROM ({excluded_update_fields_sql}) '
+        ).format(
+            update_fields_sql=', '.join(f'{model._meta.db_table}.{_quote(field.column)}' for field in update_fields),
+            excluded_update_fields_sql=', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields)
+        )
 
     on_conflict = 'DO UPDATE SET {0} {1}'.format(update_fields_sql, ignore_duplicates_sql) if update_fields else 'DO NOTHING'
 
     if return_untouched:
         sql = (
-            'WITH input_rows({0}) AS (VALUES {1}), ins AS ( '
-            'INSERT INTO {2} ({3}) SELECT * from input_rows ON CONFLICT ({4}) {5} {6}'
-            ' ) '
-            'SELECT DISTINCT ON ({7}) * FROM ('
-            'SELECT status_, {8} '
-            'FROM   ins '
-            'UNION  ALL '
-            'SELECT \'n\' AS status_, {9} '
-            'FROM input_rows '
-            'JOIN {10} c USING ({11}) '
-            ') as distinct_results'
+            ' WITH input_rows({all_field_names_sql}) AS ('
+            '     VALUES {row_values_sql}'
+            ' ), ins AS ( '
+            '     INSERT INTO {table_name} ({all_field_names_sql})'
+            '     SELECT * from input_rows'
+            '     ON CONFLICT ({unique_field_names_sql}) {on_conflict} {return_sql}'
+            ' )'
+            ' SELECT DISTINCT ON ({table_pk_name}) * FROM ('
+            '     SELECT status_, {return_fields_sql}'
+            '     FROM   ins'
+            '     UNION  ALL'
+            '     SELECT \'n\' AS status_, {aliased_return_fields_sql}'
+            '     FROM input_rows'
+            '     JOIN {table_name} c USING ({unique_field_names_sql})'
+            ' ) as distinct_results'
         ).format(
-            all_field_names_sql,
-            row_values_sql,
-            model._meta.db_table,
-            all_field_names_sql,
-            unique_field_names_sql,
-            on_conflict,
-            return_sql,
-            model._meta.pk.name,
-            _get_return_fields_sql(returning),
-            _get_return_fields_sql(returning, alias='c'),
-            model._meta.db_table,
-            unique_field_names_sql
+            all_field_names_sql=all_field_names_sql,
+            row_values_sql=row_values_sql,
+            table_name=model._meta.db_table,
+            unique_field_names_sql=unique_field_names_sql,
+            on_conflict=on_conflict,
+            return_sql=return_sql,
+            table_pk_name=model._meta.pk.name,
+            return_fields_sql=_get_return_fields_sql(returning),
+            aliased_return_fields_sql=_get_return_fields_sql(returning, alias='c')
         )
     else:
-        sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} {5}'.format(
-            model._meta.db_table,
-            all_field_names_sql,
-            row_values_sql,
-            unique_field_names_sql,
-            on_conflict,
-            return_sql
+        sql = (
+            ' INSERT INTO {table_name} ({all_field_names_sql})'
+            ' VALUES {row_values_sql}'
+            ' ON CONFLICT ({unique_field_names_sql}) {on_conflict} {return_sql}'
+        ).format(
+            table_name=model._meta.db_table,
+            all_field_names_sql=all_field_names_sql,
+            row_values_sql=row_values_sql,
+            unique_field_names_sql=unique_field_names_sql,
+            on_conflict=on_conflict,
+            return_sql=return_sql
         )
-
-    print(sql)
 
     return sql, sql_args
 
 
 def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
-           ignore_duplicate_updates=False, return_untouched=False):
+           ignore_duplicate_updates=True, return_untouched=False):
     """
     Perfom the upsert and do an optional sync operation
     """
@@ -267,7 +276,7 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
 def upsert(
     queryset, model_objs, unique_fields,
     update_fields=None, returning=False, sync=False,
-    ignore_duplicate_updates=False,
+    ignore_duplicate_updates=True,
     return_untouched=False
 ):
     """
