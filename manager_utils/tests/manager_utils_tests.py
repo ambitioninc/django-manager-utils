@@ -1140,6 +1140,7 @@ class BulkUpsert2Test(TestCase):
 
         self.assertEquals(list(results.created), [])
         self.assertEquals(len(list(results.updated)), 1)
+        self.assertEquals(len(list(results.untouched)), 2)
         self.assertEquals(list(results.updated)[0].char_field, '0')
 
     def test_all_updates_unique_int_field(self):

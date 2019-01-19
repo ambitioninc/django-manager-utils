@@ -199,12 +199,14 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
             'WITH input_rows({0}) AS (VALUES {1}), ins AS ( '
             'INSERT INTO {2} ({3}) SELECT * from input_rows ON CONFLICT ({4}) {5} {6}'
             ' ) '
-            'SELECT status_, {7} '
+            'SELECT DISTINCT ON ({7}) * FROM ('
+            'SELECT status_, {8} '
             'FROM   ins '
             'UNION  ALL '
-            'SELECT \'n\' AS status_, {8} '
+            'SELECT \'n\' AS status_, {9} '
             'FROM input_rows '
-            'JOIN {9} c USING ({10})'
+            'JOIN {10} c USING ({11}) '
+            ') as distinct_results'
         ).format(
             all_field_names_sql,
             row_values_sql,
@@ -213,14 +215,12 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
             unique_field_names_sql,
             on_conflict,
             return_sql,
+            model._meta.pk.name,
             _get_return_fields_sql(returning),
             _get_return_fields_sql(returning, alias='c'),
             model._meta.db_table,
             unique_field_names_sql
         )
-        print(sql, sql_args)
-        print('\n\n')
-        #print(sql % sql_args)
     else:
         sql = upsert_sql
 
@@ -233,6 +233,10 @@ def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
     Perfom the upsert and do an optional sync operation
     """
     model = queryset.model
+    if (return_untouched or sync) and returning is not True:
+        returning = set(returning) if returning else set()
+        returning.add(model._meta.pk.name)
+
     upserted = []
     deleted = []
     if model_objs:
@@ -293,10 +297,6 @@ def upsert(
     # Sort the rows to reduce the chances of deadlock during concurrent upserts
     model_objs = _sort_by_unique_fields(model, model_objs, unique_fields)
     update_fields = _get_update_fields(model, unique_fields, update_fields)
-
-    if sync and returning is not True:
-        returning = set(returning) if returning else set()
-        returning.add(model._meta.pk.name)
 
     return _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
                   ignore_duplicate_updates=ignore_duplicate_updates,
