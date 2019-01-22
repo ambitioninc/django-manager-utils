@@ -184,8 +184,14 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
         ignore_duplicates_sql = (
             ' WHERE ({update_fields_sql}) IS DISTINCT FROM ({excluded_update_fields_sql}) '
         ).format(
-            update_fields_sql=', '.join(f'{model._meta.db_table}.{_quote(field.column)}' for field in update_fields),
-            excluded_update_fields_sql=', '.join(f'EXCLUDED.{_quote(field.column)}' for field in update_fields)
+            update_fields_sql=', '.join(
+                '{0}.{1}'.format(model._meta.db_table, _quote(field.column))
+                for field in update_fields
+            ),
+            excluded_update_fields_sql=', '.join(
+                'EXCLUDED.' + _quote(field.column)
+                for field in update_fields
+            )
         )
 
     on_conflict = (
