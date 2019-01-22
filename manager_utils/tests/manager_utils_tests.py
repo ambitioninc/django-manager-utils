@@ -1172,7 +1172,7 @@ class BulkUpsert2Test(TestCase):
         self.assertEquals(list(results.updated)[0].char_field, '0')
         self.assertEquals(list(results.created)[0].char_field, '3')
 
-    def test_update_duplicate_fields_returning_some_updated_return_untouched(self):
+    def test_update_duplicate_fields_returning_some_updated_return_untouched_ignore_dups(self):
         """
         Tests the case when all updates were previously stored and the upsert tries to update the rows
         with duplicate values. Test when some aren't duplicates and return untouched results.
