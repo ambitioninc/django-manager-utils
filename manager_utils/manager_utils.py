@@ -248,8 +248,10 @@ def bulk_upsert(
         return _get_upserts(queryset, model_objs_to_update, model_objs_to_create, unique_fields)
 
 
-def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, returning=False,
-                 ignore_duplicate_updates=True, return_untouched=False):
+def bulk_upsert2(
+    queryset, model_objs, unique_fields, update_fields=None, returning=False,
+    ignore_duplicate_updates=True, return_untouched=False
+):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
@@ -661,17 +663,19 @@ class ManagerUtilsMixin(object):
 
     def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False,
                      ignore_duplicate_updates=True, return_untouched=False):
-        return bulk_upsert2(self.get_queryset(), model_objs, unique_fields,
-                            update_fields=update_fields, returning=returning,
-                            ignore_duplicate_updates=ignore_duplicate_updates,
-                            return_untouched=return_untouched)
+        return bulk_upsert2(
+            self.get_queryset(), model_objs, unique_fields,
+            update_fields=update_fields, returning=returning,
+            ignore_duplicate_updates=ignore_duplicate_updates,
+            return_untouched=return_untouched)
 
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, native=native)
 
     def sync2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=True):
-        return sync2(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning,
-                     ignore_duplicate_updates=ignore_duplicate_updates)
+        return sync2(
+            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning,
+            ignore_duplicate_updates=ignore_duplicate_updates)
 
     def bulk_update(self, model_objs, fields_to_update):
         return bulk_update(self.get_queryset(), model_objs, fields_to_update)

@@ -249,8 +249,10 @@ def _get_upsert_sql(queryset, model_objs, unique_fields, update_fields, returnin
     return sql, sql_args
 
 
-def _fetch(queryset, model_objs, unique_fields, update_fields, returning, sync,
-           ignore_duplicate_updates=True, return_untouched=False):
+def _fetch(
+    queryset, model_objs, unique_fields, update_fields, returning, sync,
+    ignore_duplicate_updates=True, return_untouched=False
+):
     """
     Perfom the upsert and do an optional sync operation
     """
