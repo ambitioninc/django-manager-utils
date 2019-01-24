@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v1.3.0
+------
+* Updated version 2 interface
+* Added optimizations to bulk_upsert and sync to ignore duplicate updates
+
 v1.2.0
 ------
 * Added a parallel version 2 interface for bulk_upsert2 and sync2

@@ -105,7 +105,7 @@ def bulk_upsert(
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
     If an existing object is matched, it is updated with the values from the provided objects. Objects
-    that don't match anything are bulk inserted.
+    that don't match anything are bulk created.
     A user can provide a list update_fields so that any changed values on those fields will be updated.
     However, if update_fields is not provided, this function reduces down to performing a bulk_create
     on any non extant objects.
@@ -170,7 +170,7 @@ def bulk_upsert(
         3, 3
 
         # Do the exact same operation, but this time add an additional object that is not already
-        # stored. It will be inserted.
+        # stored. It will be created.
         bulk_upsert(TestModel.objects.all(), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -184,7 +184,7 @@ def bulk_upsert(
 
         # Note that one can also do the upsert on a queryset. Perform the same data upsert on a
         # filter for int_field=1. In this case, only one object has the ability to be updated.
-        # All of the other objects will be inserted
+        # All of the other objects will be created
         bulk_upsert(TestModel.objects.filter(int_field=1), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -248,12 +248,15 @@ def bulk_upsert(
         return _get_upserts(queryset, model_objs_to_update, model_objs_to_create, unique_fields)
 
 
-def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, returning=False):
+def bulk_upsert2(
+    queryset, model_objs, unique_fields, update_fields=None, returning=False,
+    ignore_duplicate_updates=True, return_untouched=False
+):
     """
     Performs a bulk update or insert on a list of model objects. Matches all objects in the queryset
     with the objs provided using the field values in unique_fields.
     If an existing object is matched, it is updated with the values from the provided objects. Objects
-    that don't match anything are bulk inserted.
+    that don't match anything are bulk created.
     A user can provide a list update_fields so that any changed values on those fields will be updated.
     However, if update_fields is not provided, this function reduces down to performing a bulk_create
     on any non extant objects.
@@ -270,10 +273,14 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
             insert on the objects that don't exist. If ``None``, all fields will be updated.
         returning (bool|List[str]): If ``True``, returns all fields. If a list, only returns
             fields in the list. Return values are split in a tuple of created and updated models
+        ignore_duplicate_updates (bool, default=False): Ignore updating a row in the upsert if all of the update fields
+            are duplicates
+        return_untouched (bool, default=False): Return values that were not touched by the upsert operation
 
     Returns:
-        Tuple[list]: A tuple of created models and updated models returned from the upsert if
-        ``returning`` is not ``False``
+        UpsertResult: A list of results if ``returning`` is not ``False``. created, updated, and untouched,
+            results can be obtained by accessing the ``created``, ``updated``, and ``untouched`` properties
+            of the result.
 
     Examples:
 
@@ -304,7 +311,7 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
         3, 3
 
         # Do the exact same operation, but this time add an additional object that is not already
-        # stored. It will be inserted.
+        # stored. It will be created.
         bulk_upsert2(TestModel.objects.all(), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -318,7 +325,7 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
 
         # Note that one can also do the upsert on a queryset. Perform the same data upsert on a
         # filter for int_field=1. In this case, only one object has the ability to be updated.
-        # All of the other objects will be inserted
+        # All of the other objects will be created
         bulk_upsert2(TestModel.objects.filter(int_field=1), [
             TestModel(float_field=1.0, char_field='1', int_field=1),
             TestModel(float_field=2.0, char_field='2', int_field=2),
@@ -342,10 +349,12 @@ def bulk_upsert2(queryset, model_objs, unique_fields, update_fields=None, return
         print(len(updated))
         4
     """
-    created, updated, _ = upsert2.upsert(queryset, model_objs, unique_fields,
-                                         update_fields=update_fields, returning=returning)
+    results = upsert2.upsert(queryset, model_objs, unique_fields,
+                             update_fields=update_fields, returning=returning,
+                             ignore_duplicate_updates=ignore_duplicate_updates,
+                             return_untouched=return_untouched)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
-    return created, updated
+    return results
 
 
 def sync(queryset, model_objs, unique_fields, update_fields=None, **kwargs):
@@ -374,10 +383,13 @@ def sync(queryset, model_objs, unique_fields, update_fields=None, **kwargs):
     return bulk_upsert(queryset, model_objs, unique_fields, update_fields=update_fields, sync=True, **kwargs)
 
 
-def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=False):
+def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=True):
     """
     Performs a sync operation on a queryset, making the contents of the
     queryset match the contents of model_objs.
+
+    Note: The definition of a sync requires that we return untouched rows from the upsert opertion. There is
+    no way to turn off returning untouched rows in a sync.
 
     Args:
         queryset (Model|QuerySet): A model or a queryset that defines the collection to sync
@@ -392,15 +404,19 @@ def sync2(queryset, model_objs, unique_fields, update_fields=None, returning=Fal
         returning (bool|List[str]): If True, returns all fields. If a list, only returns
             fields in the list. Return values are split in a tuple of created, updated, and
             deleted models.
+        ignore_duplicate_updates (bool, default=False): Ignore updating a row in the upsert if all
+            of the update fields are duplicates
 
     Returns:
-        Tuple[list]: A tuple of created, updated, and deleted models if
-        ``returning`` is not ``False``
+        UpsertResult: A list of results if ``returning`` is not ``False``. created, updated, untouched,
+            and deleted results can be obtained by accessing the ``created``, ``updated``, ``untouched``,
+            and ``deleted`` properties of the result.
     """
-    created, updated, deleted = upsert2.upsert(queryset, model_objs, unique_fields,
-                                               update_fields=update_fields, returning=returning, sync=True)
+    results = upsert2.upsert(queryset, model_objs, unique_fields,
+                             update_fields=update_fields, returning=returning, sync=True,
+                             ignore_duplicate_updates=ignore_duplicate_updates)
     post_bulk_operation.send(sender=queryset.model, model=queryset.model)
-    return created, updated, deleted
+    return results
 
 
 def get_or_none(queryset, **query_params):
@@ -514,7 +530,7 @@ def upsert(manager, defaults=None, updates=None, **kwargs):
     Performs an update on an object or an insert if the object does not exist.
 
     :type defaults: dict
-    :param defaults: These values are set when the object is inserted, but are irrelevant
+    :param defaults: These values are set when the object is created, but are irrelevant
             when the object already exists. This field should only be used when values only need to
             be set during creation.
 
@@ -589,9 +605,12 @@ class ManagerUtilsQuerySet(QuerySet):
             self, model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts, native=native
         )
 
-    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False):
+    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False,
+                     ignore_duplicate_updates=True, return_untouched=False):
         return bulk_upsert2(self, model_objs, unique_fields,
-                            update_fields=update_fields, returning=returning)
+                            update_fields=update_fields, returning=returning,
+                            ignore_duplicate_updates=ignore_duplicate_updates,
+                            return_untouched=return_untouched)
 
     def bulk_create(self, *args, **kwargs):
         """
@@ -605,8 +624,9 @@ class ManagerUtilsQuerySet(QuerySet):
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self, model_objs, unique_fields, update_fields=update_fields, native=native)
 
-    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False):
-        return sync2(self, model_objs, unique_fields, update_fields=update_fields, returning=returning)
+    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=True):
+        return sync2(self, model_objs, unique_fields, update_fields=update_fields, returning=returning,
+                     ignore_duplicate_updates=ignore_duplicate_updates)
 
     def get_or_none(self, **query_params):
         return get_or_none(self, **query_params)
@@ -641,15 +661,21 @@ class ManagerUtilsMixin(object):
             self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, return_upserts=return_upserts,
             return_upserts_distinct=return_upserts_distinct, native=native)
 
-    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False):
-        return bulk_upsert2(self.get_queryset(), model_objs, unique_fields,
-                            update_fields=update_fields, returning=returning)
+    def bulk_upsert2(self, model_objs, unique_fields, update_fields=None, returning=False,
+                     ignore_duplicate_updates=True, return_untouched=False):
+        return bulk_upsert2(
+            self.get_queryset(), model_objs, unique_fields,
+            update_fields=update_fields, returning=returning,
+            ignore_duplicate_updates=ignore_duplicate_updates,
+            return_untouched=return_untouched)
 
     def sync(self, model_objs, unique_fields, update_fields=None, native=False):
         return sync(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, native=native)
 
-    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False):
-        return sync2(self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning)
+    def sync2(self, model_objs, unique_fields, update_fields=None, returning=False, ignore_duplicate_updates=True):
+        return sync2(
+            self.get_queryset(), model_objs, unique_fields, update_fields=update_fields, returning=returning,
+            ignore_duplicate_updates=ignore_duplicate_updates)
 
     def bulk_update(self, model_objs, fields_to_update):
         return bulk_update(self.get_queryset(), model_objs, fields_to_update)
