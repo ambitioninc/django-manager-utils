@@ -1793,6 +1793,23 @@ class BulkUpdateTest(TestCase):
         self.assertEquals(test_obj_1.float_field, 3.0)
         self.assertEquals(test_obj_2.float_field, 4.0)
 
+    def test_update_jsonb_field(self):
+        """
+        Tests that jsonb field can be bulk updated
+        """
+        test_obj_1 = G(models.TestModel, int_field=1, float_field=1.0)
+        test_obj_1.json_data = {
+            'json': 'data'
+        }
+
+        # Do a bulk update with the int fields
+        models.TestModel.objects.bulk_update([test_obj_1], ['json_data'])
+
+        test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
+        self.assertEquals(test_obj_1.json_data, {
+            'json': 'data'
+        })
+
 
 class UpsertTest(TestCase):
     """

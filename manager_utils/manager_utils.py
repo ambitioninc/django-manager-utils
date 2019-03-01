@@ -92,8 +92,16 @@ def _get_prepped_model_field(model_obj, field):
     Gets the value of a field of a model obj that is prepared for the db.
     """
     try:
+        print('')
+        print('')
+        print('_get_prepped_model_field()')
+        print('trying to get value for', field)
+        print('-- one', model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field)))
+        print('-- two', model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field)))
         return model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field))
     except:  # noqa
+        print('-- EXCEPTION wow')
+        print(getattr(model_obj, field))
         return getattr(model_obj, field)
 
 
