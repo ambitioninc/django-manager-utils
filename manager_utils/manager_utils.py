@@ -96,11 +96,16 @@ def _get_prepped_model_field(model_obj, field):
         print('')
         print('_get_prepped_model_field()')
         print('trying to get value for', field)
+        print('getattr is', getattr(model_obj, field))
+        print('the field is ', model_obj._meta.get_field(field))
+        print('the field is ', model_obj._meta.get_field(field).get_db_prep_save)
+        print('the field is ', model_obj._meta.get_field(field).get_prep_value)
         print('-- one', model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field)))
         print('-- two', model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field)))
         return model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field))
-    except:  # noqa
+    except Exception as e:  # noqa
         print('-- EXCEPTION wow')
+        print(e)
         print(getattr(model_obj, field))
         return getattr(model_obj, field)
 
