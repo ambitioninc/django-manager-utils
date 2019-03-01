@@ -531,10 +531,19 @@ def bulk_update(manager, model_objs, fields_to_update):
         return
 
     # Execute the bulk update
-    Query().from_table(
+
+    query = Query().from_table(
         table=manager.model,
         fields=chain([manager.model._meta.pk.attname] + fields_to_update),
-    ).update(updated_rows)
+    )
+
+    sql, sql_args = query.get_update_sql(updated_rows)
+    print('sql')
+    print(sql)
+    print('sql args')
+    print(sql_args)
+
+    query.update(updated_rows)
 
     post_bulk_operation.send(sender=manager.model, model=manager.model)
 

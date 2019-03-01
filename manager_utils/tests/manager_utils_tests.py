@@ -1797,10 +1797,12 @@ class BulkUpdateTest(TestCase):
         """
         Tests that jsonb field can be bulk updated
         """
+        print('test_update_jsonb_field')
         test_obj_1 = G(models.TestModel, int_field=1, float_field=1.0)
         test_obj_1.json_data = {
             'json': 'data'
         }
+        print('model before save', test_obj_1.__dict__)
 
         # Do a bulk update with the int fields
         models.TestModel.objects.bulk_update([test_obj_1], ['json_data'])
