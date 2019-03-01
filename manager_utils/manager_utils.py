@@ -1,5 +1,6 @@
 from itertools import chain
 
+from django.db import connection
 from django.db.models import Manager
 from django.db.models.query import QuerySet
 from django.dispatch import Signal
@@ -100,9 +101,9 @@ def _get_prepped_model_field(model_obj, field):
         print('the field is ', model_obj._meta.get_field(field))
         print('the field is ', model_obj._meta.get_field(field).get_db_prep_save)
         print('the field is ', model_obj._meta.get_field(field).get_prep_value)
-        print('-- one', model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field)))
+        print('-- one', model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field), connection))
         print('-- two', model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field)))
-        return model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field))
+        return model_obj._meta.get_field(field).get_db_prep_save(getattr(model_obj, field), connection)
     except Exception as e:  # noqa
         print('-- EXCEPTION wow')
         print(e)
