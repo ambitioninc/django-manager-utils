@@ -40,22 +40,31 @@ def _get_upserts_distinct(queryset, model_objs_updated, model_objs_created, uniq
     Given a list of model objects that were updated and model objects that were created,
     fetch the pks of the newly created models and return the two lists in a tuple
     """
-    created_models = []
-    # Fetch the objects that were created based on the uniqueness constraint. Note - only support the case
-    # where there is one update field so that we can perform an in query. TODO perform an OR query to gather
-    # the created values when there is more than one update field
-    if len(unique_fields) == 1:
-        unique_field = unique_fields[0]
-        created_models.extend(
-            queryset.filter(**{'{0}__in'.format(unique_field): (
-                getattr(model_obj, unique_field) for model_obj in model_objs_created
-            )})
-        )
-    else:
-        raise NotImplementedError(
-            'bulk_upsert currently doesnt support returning upserts with more than one update field')
 
-    return (model_objs_updated, created_models)
+    # Keep track of the created models
+    created_models = []
+
+    # If we created new models query for them
+    if model_objs_created:
+        created_models.extend(
+            queryset.extra(
+                where=['({unique_fields_sql}) in %s'.format(
+                    unique_fields_sql=', '.join(unique_fields)
+                )],
+                params=[
+                    tuple([
+                        tuple([
+                            getattr(model_obj, field)
+                            for field in unique_fields
+                        ])
+                        for model_obj in model_objs_created
+                    ])
+                ]
+            )
+        )
+
+    # Return the models
+    return model_objs_updated, created_models
 
 
 def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields):
