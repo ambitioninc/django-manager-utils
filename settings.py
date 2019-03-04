@@ -16,7 +16,7 @@ def configure_settings():
                 'NAME': 'ambition',
                 'USER': 'ambition',
                 'PASSWORD': 'ambition',
-                'HOST': 'localhost'
+                'HOST': 'db'
             }
         elif test_db == 'postgres':
             db_config = {
