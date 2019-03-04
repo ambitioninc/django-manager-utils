@@ -1819,6 +1819,50 @@ class BulkUpdateTest(TestCase):
         self.assertEquals(test_obj_1.float_field, 3.0)
         self.assertEquals(test_obj_2.float_field, 4.0)
 
+    def test_updating_objects_with_custom_db_field_types(self):
+        """
+        Tests when objects are updated that have custom field types
+        """
+        test_obj_1 = G(
+            models.TestModel,
+            int_field=1,
+            float_field=1.0,
+            json_field={'test': 'test'},
+            array_field=['one', 'two']
+        )
+        test_obj_2 = G(
+            models.TestModel,
+            int_field=2,
+            float_field=2.0,
+            json_field={'test2': 'test2'},
+            array_field=['three', 'four']
+        )
+
+        # Change the fields on the models
+        test_obj_1.json_field = {'test': 'updated'}
+        test_obj_1.array_field = ['one', 'two', 'updated']
+
+        test_obj_2.json_field = {'test2': 'updated'}
+        test_obj_2.array_field = ['three', 'four', 'updated']
+
+        # Do a bulk update with the int fields
+        models.TestModel.objects.bulk_update(
+            [test_obj_1, test_obj_2],
+            ['json_field', 'array_field']
+        )
+
+        # Refetch the objects
+        test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
+
+        # Assert that the json field was updated
+        self.assertEquals(test_obj_1.json_field, {'test': 'updated'})
+        self.assertEquals(test_obj_2.json_field, {'test2': 'updated'})
+
+        # Assert that the array field was updated
+        self.assertEquals(test_obj_1.array_field, ['one', 'two', 'updated'])
+        self.assertEquals(test_obj_2.array_field, ['three', 'four', 'updated'])
+
 
 class UpsertTest(TestCase):
     """
