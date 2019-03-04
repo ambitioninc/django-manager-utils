@@ -54,6 +54,6 @@ setup(
         'django-timezone-field',
         'parameterized',
     ],
-    test_suite='run_tests.run_tests',
+    test_suite='run_tests.run',
     include_package_data=True,
 )

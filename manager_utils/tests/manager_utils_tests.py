@@ -15,7 +15,7 @@ from manager_utils.tests import models
 class TestGetPreppedModelField(TestCase):
     def test_invalid_field(self):
         t = models.TestModel()
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(Exception):
             _get_prepped_model_field(t, 'non_extant_field')
 
 
@@ -380,43 +380,69 @@ class BulkUpsertTest(TestCase):
             models.TestModel.objects.bulk_upsert(
                 [], ['float_field'], ['float_field'], return_upserts_distinct=True, native=True)
 
-    def test_return_multi_unique_fields_not_supported(self):
-        """
-        Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
-        """
-        with self.assertRaises(NotImplementedError):
-            models.TestModel.objects.bulk_upsert([], ['float_field', 'int_field'], ['float_field'], return_upserts=True)
-
-    def test_return_multi_unique_distinct_fields_not_supported(self):
-        """
-        Current manager utils doesn't support returning bulk upserts when there are multiple unique fields.
-        """
-        with self.assertRaises(NotImplementedError):
-            models.TestModel.objects.bulk_upsert(
-                [], ['float_field', 'int_field'], ['float_field'], return_upserts_distinct=True)
-
     def test_return_created_values(self):
         """
         Tests that values that are created are returned properly when return_upserts is True.
         """
+
         return_values = models.TestModel.objects.bulk_upsert(
-            [models.TestModel(int_field=1), models.TestModel(int_field=3), models.TestModel(int_field=4)],
-            ['int_field'], ['float_field'], return_upserts=True
+            [
+                models.TestModel(int_field=1, char_field='1'),
+                models.TestModel(int_field=3, char_field='3'),
+                models.TestModel(int_field=4, char_field='4')
+            ],
+            ['int_field', 'char_field'],
+            ['float_field'],
+            return_upserts=True
         )
 
+        # Assert that we properly returned the models
         self.assertEquals(len(return_values), 3)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
             self.assertEquals(test_model.int_field, expected_int)
             self.assertIsNotNone(test_model.id)
         self.assertEquals(models.TestModel.objects.count(), 3)
 
+        # Run additional upserts
+        return_values = models.TestModel.objects.bulk_upsert(
+            [
+                models.TestModel(int_field=1, char_field='1', float_field=10),
+                models.TestModel(int_field=3, char_field='3'),
+                models.TestModel(int_field=4, char_field='4'),
+                models.TestModel(int_field=5, char_field='5', float_field=50),
+            ],
+            ['int_field', 'char_field'],
+            ['float_field'],
+            return_upserts=True
+        )
+        self.assertEquals(len(return_values), 4)
+        self.assertEqual(
+            [
+                [1, '1', 10],
+                [3, '3', None],
+                [4, '4', None],
+                [5, '5', 50],
+            ],
+            [
+                [test_model.int_field, test_model.char_field, test_model.float_field]
+                for test_model in return_values
+            ]
+        )
+
     def test_return_created_values_native(self):
         """
         Tests that values that are created are returned properly when return_upserts is True.
         """
         return_values = models.TestModel.objects.bulk_upsert(
-            [models.TestModel(int_field=1), models.TestModel(int_field=3), models.TestModel(int_field=4)],
-            ['int_field'], ['float_field'], return_upserts=True, native=True
+            [
+                models.TestModel(int_field=1, char_field='1'),
+                models.TestModel(int_field=3, char_field='3'),
+                models.TestModel(int_field=4, char_field='4')
+            ],
+            ['int_field', 'char_field'],
+            ['float_field'],
+            return_upserts=True,
+            native=True
         )
 
         self.assertEquals(len(return_values), 3)
@@ -1792,6 +1818,50 @@ class BulkUpdateTest(TestCase):
         # The float fields should be updated
         self.assertEquals(test_obj_1.float_field, 3.0)
         self.assertEquals(test_obj_2.float_field, 4.0)
+
+    def test_updating_objects_with_custom_db_field_types(self):
+        """
+        Tests when objects are updated that have custom field types
+        """
+        test_obj_1 = G(
+            models.TestModel,
+            int_field=1,
+            float_field=1.0,
+            json_field={'test': 'test'},
+            array_field=['one', 'two']
+        )
+        test_obj_2 = G(
+            models.TestModel,
+            int_field=2,
+            float_field=2.0,
+            json_field={'test2': 'test2'},
+            array_field=['three', 'four']
+        )
+
+        # Change the fields on the models
+        test_obj_1.json_field = {'test': 'updated'}
+        test_obj_1.array_field = ['one', 'two', 'updated']
+
+        test_obj_2.json_field = {'test2': 'updated'}
+        test_obj_2.array_field = ['three', 'four', 'updated']
+
+        # Do a bulk update with the int fields
+        models.TestModel.objects.bulk_update(
+            [test_obj_1, test_obj_2],
+            ['json_field', 'array_field']
+        )
+
+        # Refetch the objects
+        test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
+        test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
+
+        # Assert that the json field was updated
+        self.assertEquals(test_obj_1.json_field, {'test': 'updated'})
+        self.assertEquals(test_obj_2.json_field, {'test2': 'updated'})
+
+        # Assert that the array field was updated
+        self.assertEquals(test_obj_1.array_field, ['one', 'two', 'updated'])
+        self.assertEquals(test_obj_2.array_field, ['three', 'four', 'updated'])
 
 
 class UpsertTest(TestCase):

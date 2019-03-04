@@ -1,5 +1,6 @@
-from itertools import chain
+import itertools
 
+from django.db import connection
 from django.db.models import Manager
 from django.db.models.query import QuerySet
 from django.dispatch import Signal
@@ -38,22 +39,31 @@ def _get_upserts_distinct(queryset, model_objs_updated, model_objs_created, uniq
     Given a list of model objects that were updated and model objects that were created,
     fetch the pks of the newly created models and return the two lists in a tuple
     """
-    created_models = []
-    # Fetch the objects that were created based on the uniqueness constraint. Note - only support the case
-    # where there is one update field so that we can perform an in query. TODO perform an OR query to gather
-    # the created values when there is more than one update field
-    if len(unique_fields) == 1:
-        unique_field = unique_fields[0]
-        created_models.extend(
-            queryset.filter(**{'{0}__in'.format(unique_field): (
-                getattr(model_obj, unique_field) for model_obj in model_objs_created
-            )})
-        )
-    else:
-        raise NotImplementedError(
-            'bulk_upsert currently doesnt support returning upserts with more than one update field')
 
-    return (model_objs_updated, created_models)
+    # Keep track of the created models
+    created_models = []
+
+    # If we created new models query for them
+    if model_objs_created:
+        created_models.extend(
+            queryset.extra(
+                where=['({unique_fields_sql}) in %s'.format(
+                    unique_fields_sql=', '.join(unique_fields)
+                )],
+                params=[
+                    tuple([
+                        tuple([
+                            getattr(model_obj, field)
+                            for field in unique_fields
+                        ])
+                        for model_obj in model_objs_created
+                    ])
+                ]
+            )
+        )
+
+    # Return the models
+    return model_objs_updated, created_models
 
 
 def _get_upserts(queryset, model_objs_updated, model_objs_created, unique_fields):
@@ -91,10 +101,15 @@ def _get_prepped_model_field(model_obj, field):
     """
     Gets the value of a field of a model obj that is prepared for the db.
     """
-    try:
-        return model_obj._meta.get_field(field).get_prep_value(getattr(model_obj, field))
-    except:  # noqa
-        return getattr(model_obj, field)
+
+    # Get the field
+    field = model_obj._meta.get_field(field)
+
+    # Get the value
+    value = field.get_db_prep_save(getattr(model_obj, field.attname), connection)
+
+    # Return the value
+    return value
 
 
 def bulk_upsert(
@@ -509,19 +524,70 @@ def bulk_update(manager, model_objs, fields_to_update):
         10, 20.0
 
     """
-    updated_rows = [
-        [model_obj.pk] + [_get_prepped_model_field(model_obj, field_name) for field_name in fields_to_update]
+
+    # Add the pk to the value fields so we can join
+    value_fields = [manager.model._meta.pk.attname] + fields_to_update
+
+    # Build the row values
+    row_values = [
+        [_get_prepped_model_field(model_obj, field_name) for field_name in value_fields]
         for model_obj in model_objs
     ]
-    if len(updated_rows) == 0 or len(fields_to_update) == 0:
+
+    # If we do not have any values or fields to update just return
+    if len(row_values) == 0 or len(fields_to_update) == 0:
         return
 
-    # Execute the bulk update
-    Query().from_table(
-        table=manager.model,
-        fields=chain([manager.model._meta.pk.attname] + fields_to_update),
-    ).update(updated_rows)
+    # Create a map of db types
+    db_types = [
+        manager.model._meta.get_field(field).db_type(connection)
+        for field in value_fields
+    ]
 
+    # Build the value fields sql
+    value_fields_sql = ', '.join(value_fields)
+
+    # Build the set sql
+    update_fields_sql = ', '.join([
+        '{field} = new_values.{field}'.format(field=field)
+        for field in fields_to_update
+    ])
+
+    # Build the values sql
+    values_sql = ', '.join([
+        '({0})'.format(
+            ', '.join([
+                '%s::{0}'.format(
+                    db_types[i]
+                ) if not row_number and i else '%s'
+                for i, _ in enumerate(row)
+            ])
+        )
+        for row_number, row in enumerate(row_values)
+    ])
+
+    # Start building the query
+    update_sql = (
+        'UPDATE {table} '
+        'SET {update_fields_sql} '
+        'FROM (VALUES {values_sql}) AS new_values ({value_fields_sql}) '
+        'WHERE {table}.{pk_field} = new_values.{pk_field}'
+    ).format(
+        table=manager.model._meta.db_table,
+        pk_field=manager.model._meta.pk.attname,
+        update_fields_sql=update_fields_sql,
+        values_sql=values_sql,
+        value_fields_sql=value_fields_sql
+    )
+
+    # Combine all the row values
+    update_sql_params = list(itertools.chain(*row_values))
+
+    # Run the update query
+    with connection.cursor() as cursor:
+        cursor.execute(update_sql, update_sql_params)
+
+    # call the bulk operation signal
     post_bulk_operation.send(sender=manager.model, model=manager.model)
 
 
