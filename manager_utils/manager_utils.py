@@ -1,5 +1,4 @@
 import itertools
-from itertools import chain
 
 from django.db import connection
 from django.db.models import Manager
