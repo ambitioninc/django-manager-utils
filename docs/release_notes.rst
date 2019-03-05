@@ -1,10 +1,14 @@
 Release Notes
 =============
 
-v1.3.1
+v1.3.2
 ------
 * Fix bulk_update not properly casting fields
 * Add support for returning upserts with multiple unique fields for non native
+
+v1.3.1
+------
+* BAD RELEASE DO NOT USE
 
 v1.3.0
 ------
