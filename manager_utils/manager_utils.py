@@ -545,11 +545,16 @@ def bulk_update(manager, model_objs, fields_to_update):
     ]
 
     # Build the value fields sql
-    value_fields_sql = ', '.join(value_fields)
+    value_fields_sql = ', '.join(
+        '"{field}"'.format(field=manager.model._meta.get_field(field).column)
+        for field in value_fields
+    )
 
     # Build the set sql
     update_fields_sql = ', '.join([
-        '{field} = new_values.{field}'.format(field=field)
+        '"{field}" = "new_values"."{field}"'.format(
+            field=manager.model._meta.get_field(field).column
+        )
         for field in fields_to_update
     ])
 
@@ -571,10 +576,10 @@ def bulk_update(manager, model_objs, fields_to_update):
         'UPDATE {table} '
         'SET {update_fields_sql} '
         'FROM (VALUES {values_sql}) AS new_values ({value_fields_sql}) '
-        'WHERE {table}.{pk_field} = new_values.{pk_field}'
+        'WHERE "{table}"."{pk_field}" = "new_values"."{pk_field}"'
     ).format(
         table=manager.model._meta.db_table,
-        pk_field=manager.model._meta.pk.attname,
+        pk_field=manager.model._meta.pk.column,
         update_fields_sql=update_fields_sql,
         values_sql=values_sql,
         value_fields_sql=value_fields_sql

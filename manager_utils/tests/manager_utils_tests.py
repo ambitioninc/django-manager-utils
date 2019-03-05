@@ -1653,6 +1653,13 @@ class BulkUpdateTest(TestCase):
         models.TestForeignKeyModel.objects.bulk_update([t_fk_model], ['test_model_id'])
         self.assertEqual(models.TestForeignKeyModel.objects.get().test_model, t_model)
 
+    def test_update_foreign_key_by_name(self):
+        t_model = G(models.TestModel)
+        t_fk_model = G(models.TestForeignKeyModel)
+        t_fk_model.test_model = t_model
+        models.TestForeignKeyModel.objects.bulk_update([t_fk_model], ['test_model'])
+        self.assertEqual(models.TestForeignKeyModel.objects.get().test_model, t_model)
+
     def test_foreign_key_pk_using_id(self):
         """
         Tests a bulk update on a model that has a primary key to a foreign key. It uses the id of the pk in the
