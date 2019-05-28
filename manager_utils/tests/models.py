@@ -2,7 +2,6 @@ from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
 from manager_utils import ManagerUtilsManager
 from timezone_field import TimeZoneField
-from django.contrib.postgres.fields import JSONField
 
 
 class TestModel(models.Model):
