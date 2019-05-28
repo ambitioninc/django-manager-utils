@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v1.4.0
+------
+* Only support django >= 2.0 and python >= 3.6
+* Fix bulk upsert sql issue to distinguish fields by table
+
 v1.3.2
 ------
 * Fix bulk_update not properly casting fields
