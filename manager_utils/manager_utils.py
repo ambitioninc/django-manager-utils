@@ -43,12 +43,19 @@ def _get_upserts_distinct(queryset, model_objs_updated, model_objs_created, uniq
     # Keep track of the created models
     created_models = []
 
+    # Add table name to unique fields
+    table_name = queryset.model._meta.db_table
+    unique_fields_sql = [
+        '"{0}"."{1}"'.format(table_name, unique_field)
+        for unique_field in unique_fields
+    ]
+
     # If we created new models query for them
     if model_objs_created:
         created_models.extend(
             queryset.extra(
                 where=['({unique_fields_sql}) in %s'.format(
-                    unique_fields_sql=', '.join(unique_fields)
+                    unique_fields_sql=', '.join(unique_fields_sql)
                 )],
                 params=[
                     tuple([
