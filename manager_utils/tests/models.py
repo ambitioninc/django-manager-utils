@@ -14,7 +14,6 @@ class TestModel(models.Model):
     json_field = JSONField(default=dict)
     array_field = ArrayField(models.CharField(max_length=128), default=list)
     time_zone = TimeZoneField(default='UTC')
-    json_data = JSONField(default=dict)
 
     objects = ManagerUtilsManager()
 
