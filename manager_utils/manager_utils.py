@@ -132,8 +132,8 @@ def bulk_upsert(
     However, if update_fields is not provided, this function reduces down to performing a bulk_create
     on any non extant objects.
 
-    :type model_objs: list of dict
-    :param model_objs: A list of dictionaries that have fields corresponding to the model in the manager.
+    :type model_objs: list of :class:`Models<django:django.db.models.Model>`
+    :param model_objs: A list of models to upsert.
 
     :type unique_fields: list of str
     :param unique_fields: A list of fields that are used to determine if an object in objs matches a model
