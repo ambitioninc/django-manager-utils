@@ -6,3 +6,4 @@ django-dynamic-fixture
 pytz
 django-timezone-field
 parameterized
+freezegun
