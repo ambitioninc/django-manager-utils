@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v2.0.1
+------
+* Fixed docstring (alextatarinov)
+
 v2.0.0
 ------
 * Support django 2.2, 3.0, 3.1 only
