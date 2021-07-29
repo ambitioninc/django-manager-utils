@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v2.0.2
+------
+* Removed custom operation to fetch newly created models in bulk upsert
+
 v2.0.1
 ------
 * Fixed docstring (alextatarinov)
