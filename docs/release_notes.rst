@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v2.0.3
+------
+* Fetching newly created models in bulk upsert so that relations are hydrated
+
 v2.0.2
 ------
 * Removed custom operation to fetch newly created models in bulk upsert
