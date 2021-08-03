@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v2.0.4
+------
+* Only conditionally fetching newly created models to match number of queries prior to 2.0.2
+
 v2.0.3
 ------
 * Fetching newly created models in bulk upsert so that relations are hydrated
