@@ -11,7 +11,7 @@ from . import upsert2
 
 
 # A signal that is emitted when any bulk operation occurs
-post_bulk_operation = Signal(providing_args=['model'])
+post_bulk_operation = Signal()  # args: model
 
 
 def id_dict(queryset):
