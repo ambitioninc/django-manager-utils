@@ -37,7 +37,7 @@ class SyncTest(TestCase):
             models.TestPkChar(my_key='5', char_field='2')
         ], ['my_key'], ['char_field'], native=native)
 
-        self.assertEquals(models.TestPkChar.objects.count(), 3)
+        self.assertEqual(models.TestPkChar.objects.count(), 3)
         self.assertTrue(models.TestPkChar.objects.filter(my_key='3').exists())
         self.assertTrue(models.TestPkChar.objects.filter(my_key='4').exists())
         self.assertTrue(models.TestPkChar.objects.filter(my_key='5').exists())
@@ -47,7 +47,7 @@ class SyncTest(TestCase):
         with self.assertRaises(models.TestPkChar.DoesNotExist):
             models.TestPkChar.objects.get(pk=extant_obj2.pk)
         test_model = models.TestPkChar.objects.get(pk=extant_obj3.pk)
-        self.assertEquals(test_model.char_field, '2')
+        self.assertEqual(test_model.char_field, '2')
 
     @parameterized.expand([(True,), (False,)])
     def test_no_existing_objs(self, native):
@@ -58,7 +58,7 @@ class SyncTest(TestCase):
             models.TestModel(int_field=1), models.TestModel(int_field=3),
             models.TestModel(int_field=4)
         ], ['int_field'], ['float_field'], native=native)
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
@@ -76,7 +76,7 @@ class SyncTest(TestCase):
             models.TestModel(int_field=4), models.TestModel(int_field=5), models.TestModel(int_field=6)
         ], ['int_field'], ['float_field'], native=native)
 
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=5).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=6).exists())
@@ -99,7 +99,7 @@ class SyncTest(TestCase):
 
         models.TestModel.objects.sync([], ['int_field'], ['float_field'], native=native)
 
-        self.assertEquals(models.TestModel.objects.count(), 0)
+        self.assertEqual(models.TestModel.objects.count(), 0)
         with self.assertRaises(models.TestModel.DoesNotExist):
             models.TestModel.objects.get(id=extant_obj1.id)
         with self.assertRaises(models.TestModel.DoesNotExist):
@@ -121,7 +121,7 @@ class SyncTest(TestCase):
             models.TestModel(int_field=5, float_field=2)
         ], ['int_field'], ['float_field'], native=native)
 
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=5).exists())
@@ -131,7 +131,7 @@ class SyncTest(TestCase):
         with self.assertRaises(models.TestModel.DoesNotExist):
             models.TestModel.objects.get(id=extant_obj2.id)
         test_model = models.TestModel.objects.get(id=extant_obj3.id)
-        self.assertEquals(test_model.int_field, 3)
+        self.assertEqual(test_model.int_field, 3)
 
     @parameterized.expand([(True,), (False,)])
     def test_existing_objs_some_deleted_w_queryset(self, native):
@@ -149,7 +149,7 @@ class SyncTest(TestCase):
             models.TestModel(int_field=3, float_field=2)
         ], ['int_field'], ['float_field'], native=native)
 
-        self.assertEquals(models.TestModel.objects.count(), 4)
+        self.assertEqual(models.TestModel.objects.count(), 4)
         self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=2).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
@@ -158,13 +158,13 @@ class SyncTest(TestCase):
             models.TestModel.objects.get(id=extant_obj0.id)
 
         test_model = models.TestModel.objects.get(id=extant_obj1.id)
-        self.assertEquals(test_model.float_field, 2)
+        self.assertEqual(test_model.float_field, 2)
         test_model = models.TestModel.objects.get(id=extant_obj2.id)
-        self.assertEquals(test_model.float_field, 2)
+        self.assertEqual(test_model.float_field, 2)
         test_model = models.TestModel.objects.get(id=extant_obj3.id)
-        self.assertEquals(test_model.float_field, 2)
+        self.assertEqual(test_model.float_field, 2)
         test_model = models.TestModel.objects.get(id=extant_obj4.id)
-        self.assertEquals(test_model.float_field, 0)
+        self.assertEqual(test_model.float_field, 0)
 
 
 class Sync2Test(TestCase):
@@ -184,7 +184,7 @@ class Sync2Test(TestCase):
             models.TestPkChar(my_key='5', char_field='2')
         ], ['my_key'], ['char_field'])
 
-        self.assertEquals(models.TestPkChar.objects.count(), 3)
+        self.assertEqual(models.TestPkChar.objects.count(), 3)
         self.assertTrue(models.TestPkChar.objects.filter(my_key='3').exists())
         self.assertTrue(models.TestPkChar.objects.filter(my_key='4').exists())
         self.assertTrue(models.TestPkChar.objects.filter(my_key='5').exists())
@@ -194,7 +194,7 @@ class Sync2Test(TestCase):
         with self.assertRaises(models.TestPkChar.DoesNotExist):
             models.TestPkChar.objects.get(pk=extant_obj2.pk)
         test_model = models.TestPkChar.objects.get(pk=extant_obj3.pk)
-        self.assertEquals(test_model.char_field, '2')
+        self.assertEqual(test_model.char_field, '2')
 
     def test_no_existing_objs(self):
         """
@@ -204,7 +204,7 @@ class Sync2Test(TestCase):
             models.TestModel(int_field=1), models.TestModel(int_field=3),
             models.TestModel(int_field=4)
         ], ['int_field'], ['float_field'])
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
@@ -221,7 +221,7 @@ class Sync2Test(TestCase):
             models.TestModel(int_field=4), models.TestModel(int_field=5), models.TestModel(int_field=6)
         ], ['int_field'], ['float_field'])
 
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=5).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=6).exists())
@@ -243,7 +243,7 @@ class Sync2Test(TestCase):
 
         models.TestModel.objects.sync2([], ['int_field'], ['float_field'])
 
-        self.assertEquals(models.TestModel.objects.count(), 0)
+        self.assertEqual(models.TestModel.objects.count(), 0)
         with self.assertRaises(models.TestModel.DoesNotExist):
             models.TestModel.objects.get(id=extant_obj1.id)
         with self.assertRaises(models.TestModel.DoesNotExist):
@@ -264,7 +264,7 @@ class Sync2Test(TestCase):
             models.TestModel(int_field=5, float_field=2)
         ], ['int_field'], ['float_field'])
 
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=4).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=5).exists())
@@ -274,7 +274,7 @@ class Sync2Test(TestCase):
         with self.assertRaises(models.TestModel.DoesNotExist):
             models.TestModel.objects.get(id=extant_obj2.id)
         test_model = models.TestModel.objects.get(id=extant_obj3.id)
-        self.assertEquals(test_model.int_field, 3)
+        self.assertEqual(test_model.int_field, 3)
 
     def test_existing_objs_some_deleted_w_queryset(self):
         """
@@ -291,7 +291,7 @@ class Sync2Test(TestCase):
             models.TestModel(int_field=3, float_field=2)
         ], ['int_field'], ['float_field'])
 
-        self.assertEquals(models.TestModel.objects.count(), 4)
+        self.assertEqual(models.TestModel.objects.count(), 4)
         self.assertTrue(models.TestModel.objects.filter(int_field=1).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=2).exists())
         self.assertTrue(models.TestModel.objects.filter(int_field=3).exists())
@@ -300,13 +300,13 @@ class Sync2Test(TestCase):
             models.TestModel.objects.get(id=extant_obj0.id)
 
         test_model = models.TestModel.objects.get(id=extant_obj1.id)
-        self.assertEquals(test_model.float_field, 2)
+        self.assertEqual(test_model.float_field, 2)
         test_model = models.TestModel.objects.get(id=extant_obj2.id)
-        self.assertEquals(test_model.float_field, 2)
+        self.assertEqual(test_model.float_field, 2)
         test_model = models.TestModel.objects.get(id=extant_obj3.id)
-        self.assertEquals(test_model.float_field, 2)
+        self.assertEqual(test_model.float_field, 2)
         test_model = models.TestModel.objects.get(id=extant_obj4.id)
-        self.assertEquals(test_model.float_field, 0)
+        self.assertEqual(test_model.float_field, 0)
 
     def test_existing_objs_some_deleted_wo_update(self):
         """
@@ -320,10 +320,10 @@ class Sync2Test(TestCase):
             models.TestModel(int_field=3, float_field=2)
         ], ['int_field'], [], returning=True)
 
-        self.assertEquals(len(list(results)), 4)
-        self.assertEquals(len(list(results.deleted)), 1)
-        self.assertEquals(len(list(results.untouched)), 3)
-        self.assertEquals(list(results.deleted)[0].id, objs[0].id)
+        self.assertEqual(len(list(results)), 4)
+        self.assertEqual(len(list(results.deleted)), 1)
+        self.assertEqual(len(list(results.untouched)), 3)
+        self.assertEqual(list(results.deleted)[0].id, objs[0].id)
 
     def test_existing_objs_some_deleted_some_updated(self):
         """
@@ -337,11 +337,11 @@ class Sync2Test(TestCase):
             models.TestModel(int_field=3, float_field=2)
         ], ['int_field'], ['float_field'], returning=True, ignore_duplicate_updates=True)
 
-        self.assertEquals(len(list(results)), 4)
-        self.assertEquals(len(list(results.deleted)), 1)
-        self.assertEquals(len(list(results.updated)), 2)
-        self.assertEquals(len(list(results.untouched)), 1)
-        self.assertEquals(list(results.deleted)[0].id, objs[0].id)
+        self.assertEqual(len(list(results)), 4)
+        self.assertEqual(len(list(results.deleted)), 1)
+        self.assertEqual(len(list(results.updated)), 2)
+        self.assertEqual(len(list(results.untouched)), 1)
+        self.assertEqual(list(results.deleted)[0].id, objs[0].id)
 
 
 class BulkUpsertTest(TestCase):
@@ -353,7 +353,7 @@ class BulkUpsertTest(TestCase):
         Tests the return_upserts flag on bulk upserts when there is no data.
         """
         return_values = models.TestModel.objects.bulk_upsert([], ['float_field'], ['float_field'], return_upserts=True)
-        self.assertEquals(return_values, [])
+        self.assertEqual(return_values, [])
 
     def test_return_upserts_distinct_none(self):
         """
@@ -361,7 +361,7 @@ class BulkUpsertTest(TestCase):
         """
         return_values = models.TestModel.objects.bulk_upsert(
             [], ['float_field'], ['float_field'], return_upserts_distinct=True)
-        self.assertEquals(return_values, ([], []))
+        self.assertEqual(return_values, ([], []))
 
     def test_return_upserts_none_native(self):
         """
@@ -370,7 +370,7 @@ class BulkUpsertTest(TestCase):
         return_values = models.TestModel.objects.bulk_upsert(
             [], ['float_field'], ['float_field'], return_upserts=True, native=True
         )
-        self.assertEquals(return_values, [])
+        self.assertEqual(return_values, [])
 
     def test_return_upserts_distinct_none_native(self):
         """
@@ -397,11 +397,11 @@ class BulkUpsertTest(TestCase):
         )
 
         # Assert that we properly returned the models
-        self.assertEquals(len(return_values), 3)
+        self.assertEqual(len(return_values), 3)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
+            self.assertEqual(test_model.int_field, expected_int)
             self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
 
         # Run additional upserts
         return_values = models.TestModel.objects.bulk_upsert(
@@ -415,7 +415,7 @@ class BulkUpsertTest(TestCase):
             ['float_field'],
             return_upserts=True
         )
-        self.assertEquals(len(return_values), 4)
+        self.assertEqual(len(return_values), 4)
         self.assertEqual(
             [
                 [1, '1', 10],
@@ -445,11 +445,11 @@ class BulkUpsertTest(TestCase):
             native=True
         )
 
-        self.assertEquals(len(return_values), 3)
+        self.assertEqual(len(return_values), 3)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
+            self.assertEqual(test_model.int_field, expected_int)
             self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
 
     def test_return_created_updated_values(self):
         """
@@ -464,12 +464,12 @@ class BulkUpsertTest(TestCase):
             ],
             ['int_field'], ['float_field'], return_upserts=True)
 
-        self.assertEquals(len(return_values), 4)
+        self.assertEqual(len(return_values), 4)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
-            self.assertAlmostEquals(test_model.float_field, 3.0)
+            self.assertEqual(test_model.int_field, expected_int)
+            self.assertAlmostEqual(test_model.float_field, 3.0)
             self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 4)
+        self.assertEqual(models.TestModel.objects.count(), 4)
 
     def test_return_created_updated_values_native(self):
         """
@@ -491,12 +491,12 @@ class BulkUpsertTest(TestCase):
             native=True
         )
 
-        self.assertEquals(len(return_values), 4)
+        self.assertEqual(len(return_values), 4)
         for test_model, expected_int in zip(sorted(return_values, key=lambda k: k.int_field), [1, 2, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
-            self.assertAlmostEquals(test_model.float_field, 3.0)
+            self.assertEqual(test_model.int_field, expected_int)
+            self.assertAlmostEqual(test_model.float_field, 3.0)
             self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 4)
+        self.assertEqual(models.TestModel.objects.count(), 4)
 
     def test_return_created_updated_values_distinct(self):
         """
@@ -512,14 +512,14 @@ class BulkUpsertTest(TestCase):
         ]
         updated, created = models.TestModel.objects.bulk_upsert(
             model_objects, ['int_field'], ['float_field'], return_upserts_distinct=True)
-        self.assertEquals(
+        self.assertEqual(
             [(2, 3.0)],
             [
                 (obj.int_field, obj.float_field)
                 for obj in sorted(updated, key=lambda k: k.int_field)
             ]
         )
-        self.assertEquals(
+        self.assertEqual(
             [(1, 3.0), (3, 3.0), (4, 3.0)],
             [
                 (obj.int_field, obj.float_field)
@@ -548,9 +548,9 @@ class BulkUpsertTest(TestCase):
             models.TestModel(int_field=1), models.TestModel(int_field=2), models.TestModel(int_field=3)
         ], ['int_field'])
         # Three objects should now exist
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
-            self.assertEquals(test_model.int_field, expected_int_value)
+            self.assertEqual(test_model.int_field, expected_int_value)
 
     def test_wo_update_fields_native(self):
         """
@@ -569,27 +569,27 @@ class BulkUpsertTest(TestCase):
             native=True
         )
         # Three objects should now exist
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
-            self.assertEquals(test_model.int_field, expected_int_value)
+            self.assertEqual(test_model.int_field, expected_int_value)
 
     def test_w_blank_arguments(self):
         """
         Tests using required arguments and using blank arguments for everything else.
         """
         models.TestModel.objects.bulk_upsert([], ['field'], ['field'])
-        self.assertEquals(models.TestModel.objects.count(), 0)
+        self.assertEqual(models.TestModel.objects.count(), 0)
 
         # Test native
         models.TestModel.objects.bulk_upsert([], ['field'], ['field'], native=True)
-        self.assertEquals(models.TestModel.objects.count(), 0)
+        self.assertEqual(models.TestModel.objects.count(), 0)
 
     def test_w_blank_arguments_native(self):
         """
         Tests using required arguments and using blank arguments for everything else.
         """
         models.TestModel.objects.bulk_upsert([], ['field'], ['field'], native=True)
-        self.assertEquals(models.TestModel.objects.count(), 0)
+        self.assertEqual(models.TestModel.objects.count(), 0)
 
     def test_no_updates(self):
         """
@@ -638,7 +638,7 @@ class BulkUpsertTest(TestCase):
         ], ['int_field'], ['char_field', 'float_field'])
 
         # Verify that the fields were updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, str(i))
@@ -661,7 +661,7 @@ class BulkUpsertTest(TestCase):
         ], ['int_field'], ['char_field', 'float_field'], native=True)
 
         # Verify that the fields were updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, str(i))
@@ -684,7 +684,7 @@ class BulkUpsertTest(TestCase):
         ], ['int_field'], update_fields=['float_field'])
 
         # Verify that the float field was updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
@@ -707,7 +707,7 @@ class BulkUpsertTest(TestCase):
         ], ['int_field'], update_fields=['float_field'], native=True)
 
         # Verify that the float field was updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
@@ -731,7 +731,7 @@ class BulkUpsertTest(TestCase):
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1' if i < 2 else '2')
@@ -755,7 +755,7 @@ class BulkUpsertTest(TestCase):
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1' if i < 2 else '2')
@@ -780,16 +780,16 @@ class BulkUpsertTest(TestCase):
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
         m1 = models.TestModel.objects.get(time_zone=timezone('US/Eastern'))
-        self.assertEquals(m1.char_field, '-1')
-        self.assertAlmostEquals(m1.float_field, 0)
+        self.assertEqual(m1.char_field, '-1')
+        self.assertAlmostEqual(m1.float_field, 0)
 
         m2 = models.TestModel.objects.get(time_zone=timezone('US/Central'))
-        self.assertEquals(m2.char_field, '-1')
-        self.assertAlmostEquals(m2.float_field, 1)
+        self.assertEqual(m2.char_field, '-1')
+        self.assertAlmostEqual(m2.float_field, 1)
 
         m3 = models.TestModel.objects.get(time_zone=timezone('UTC'))
-        self.assertEquals(m3.char_field, '2')
-        self.assertAlmostEquals(m3.float_field, 2)
+        self.assertEqual(m3.char_field, '2')
+        self.assertAlmostEqual(m3.float_field, 2)
 
     def test_some_updates_unique_int_char_field_update_float_field(self):
         """
@@ -809,7 +809,7 @@ class BulkUpsertTest(TestCase):
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, str(i))
@@ -833,7 +833,7 @@ class BulkUpsertTest(TestCase):
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, str(i))
@@ -856,13 +856,13 @@ class BulkUpsertTest(TestCase):
         ], ['int_field', 'char_field'], ['float_field'])
 
         # Verify that no updates occured
-        self.assertEquals(models.TestModel.objects.count(), 6)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 6)
+        self.assertEqual(models.TestModel.objects.filter(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
             self.assertAlmostEqual(model_obj.float_field, -1)
-        self.assertEquals(models.TestModel.objects.exclude(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.exclude(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.exclude(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i + 3)
             self.assertEqual(model_obj.char_field, str(i))
@@ -885,13 +885,13 @@ class BulkUpsertTest(TestCase):
         ], ['int_field', 'char_field'], ['float_field'], native=True)
 
         # Verify that no updates occured
-        self.assertEquals(models.TestModel.objects.count(), 6)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 6)
+        self.assertEqual(models.TestModel.objects.filter(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
             self.assertAlmostEqual(model_obj.float_field, -1)
-        self.assertEquals(models.TestModel.objects.exclude(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.exclude(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.exclude(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i + 3)
             self.assertEqual(model_obj.char_field, str(i))
@@ -913,8 +913,8 @@ class BulkUpsertTest(TestCase):
         ], ['int_field'], ['float_field'])
 
         # Verify that two new objecs were created
-        self.assertEquals(models.TestModel.objects.count(), 5)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 5)
+        self.assertEqual(models.TestModel.objects.filter(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
@@ -935,8 +935,8 @@ class BulkUpsertTest(TestCase):
         ], ['int_field'], ['float_field'], native=True)
 
         # Verify that two new objecs were created
-        self.assertEquals(models.TestModel.objects.count(), 5)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 5)
+        self.assertEqual(models.TestModel.objects.filter(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
@@ -951,7 +951,7 @@ class BulkUpsert2Test(TestCase):
         Tests the return_upserts flag on bulk upserts when there is no data.
         """
         return_values = models.TestModel.objects.bulk_upsert2([], ['float_field'], ['float_field'], returning=True)
-        self.assertEquals(return_values, [])
+        self.assertEqual(return_values, [])
 
     def test_return_multi_unique_fields_not_supported(self):
         """
@@ -959,7 +959,7 @@ class BulkUpsert2Test(TestCase):
         """
         return_values = models.TestModel.objects.bulk_upsert2([], ['float_field', 'int_field'], ['float_field'],
                                                               returning=True)
-        self.assertEquals(return_values, [])
+        self.assertEqual(return_values, [])
 
     def test_return_created_values(self):
         """
@@ -970,11 +970,11 @@ class BulkUpsert2Test(TestCase):
             ['int_field'], ['float_field'], returning=True
         )
 
-        self.assertEquals(len(list(results.created)), 3)
+        self.assertEqual(len(list(results.created)), 3)
         for test_model, expected_int in zip(sorted(results.created, key=lambda k: k.int_field), [1, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
+            self.assertEqual(test_model.int_field, expected_int)
             self.assertIsNotNone(test_model.id)
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
 
     def test_return_list_of_values(self):
         """
@@ -988,10 +988,10 @@ class BulkUpsert2Test(TestCase):
             ['int_field'], ['float_field'], returning=['float_field']
         )
 
-        self.assertEquals(len(list(results.created)), 3)
+        self.assertEqual(len(list(results.created)), 3)
         with self.assertRaises(AttributeError):
             list(results.created)[0].int_field
-        self.assertEquals(set([2, 4, 5]), set([m.float_field for m in results.created]))
+        self.assertEqual(set([2, 4, 5]), set([m.float_field for m in results.created]))
 
     def test_return_created_updated_values(self):
         """
@@ -1008,17 +1008,17 @@ class BulkUpsert2Test(TestCase):
 
         created = list(results.created)
         updated = list(results.updated)
-        self.assertEquals(len(created), 3)
-        self.assertEquals(len(updated), 1)
+        self.assertEqual(len(created), 3)
+        self.assertEqual(len(updated), 1)
         for test_model, expected_int in zip(sorted(created, key=lambda k: k.int_field), [1, 3, 4]):
-            self.assertEquals(test_model.int_field, expected_int)
-            self.assertAlmostEquals(test_model.float_field, 3.0)
+            self.assertEqual(test_model.int_field, expected_int)
+            self.assertAlmostEqual(test_model.float_field, 3.0)
             self.assertIsNotNone(test_model.id)
 
-        self.assertEquals(updated[0].int_field, 2)
-        self.assertAlmostEquals(updated[0].float_field, 3.0)
+        self.assertEqual(updated[0].int_field, 2)
+        self.assertAlmostEqual(updated[0].float_field, 3.0)
         self.assertIsNotNone(updated[0].id)
-        self.assertEquals(models.TestModel.objects.count(), 4)
+        self.assertEqual(models.TestModel.objects.count(), 4)
 
     def test_created_updated_auto_datetime_values(self):
         """
@@ -1039,16 +1039,16 @@ class BulkUpsert2Test(TestCase):
                 ],
                 ['int_field'], returning=True)
 
-        self.assertEquals(len(list(results.created)), 3)
-        self.assertEquals(len(list(results.updated)), 1)
+        self.assertEqual(len(list(results.created)), 3)
+        self.assertEqual(len(list(results.updated)), 1)
 
         expected_auto_now = [dt.datetime(2018, 9, 2), dt.datetime(2018, 9, 2),
                              dt.datetime(2018, 9, 2), dt.datetime(2018, 9, 2)]
         expected_auto_now_add = [dt.datetime(2018, 9, 1), dt.datetime(2018, 9, 2),
                                  dt.datetime(2018, 9, 2), dt.datetime(2018, 9, 2)]
         for i, test_model in enumerate(sorted(results, key=lambda k: k.int_field)):
-            self.assertEquals(test_model.auto_now_field, expected_auto_now[i])
-            self.assertEquals(test_model.auto_now_add_field, expected_auto_now_add[i])
+            self.assertEqual(test_model.auto_now_field, expected_auto_now[i])
+            self.assertEqual(test_model.auto_now_add_field, expected_auto_now_add[i])
 
     def test_wo_update_fields(self):
         """
@@ -1065,17 +1065,17 @@ class BulkUpsert2Test(TestCase):
             models.TestModel(int_field=3, float_field=3)
         ], ['int_field'], update_fields=[])
         # Three objects should now exist, but no float fields should be updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for test_model, expected_int_value in zip(models.TestModel.objects.order_by('int_field'), [1, 2, 3]):
-            self.assertEquals(test_model.int_field, expected_int_value)
-            self.assertEquals(test_model.float_field, expected_int_value)
+            self.assertEqual(test_model.int_field, expected_int_value)
+            self.assertEqual(test_model.float_field, expected_int_value)
 
     def test_w_blank_arguments(self):
         """
         Tests using required arguments and using blank arguments for everything else.
         """
         models.TestModel.objects.bulk_upsert2([], ['field'], ['field'])
-        self.assertEquals(models.TestModel.objects.count(), 0)
+        self.assertEqual(models.TestModel.objects.count(), 0)
 
     def test_no_updates(self):
         """
@@ -1110,11 +1110,11 @@ class BulkUpsert2Test(TestCase):
             models.TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], returning=True)
 
-        self.assertEquals(list(results.created), [])
-        self.assertEquals(set([u.id for u in results.updated]), set([t.id for t in test_models]))
-        self.assertEquals(set([u.int_field for u in results.updated]), set([0, 1, 2]))
-        self.assertEquals(set([u.float_field for u in results.updated]), set([0, 1, 2]))
-        self.assertEquals(set([u.char_field for u in results.updated]), set(['0', '1', '2']))
+        self.assertEqual(list(results.created), [])
+        self.assertEqual(set([u.id for u in results.updated]), set([t.id for t in test_models]))
+        self.assertEqual(set([u.int_field for u in results.updated]), set([0, 1, 2]))
+        self.assertEqual(set([u.float_field for u in results.updated]), set([0, 1, 2]))
+        self.assertEqual(set([u.char_field for u in results.updated]), set(['0', '1', '2']))
 
     def test_no_update_fields_returning(self):
         """
@@ -1132,7 +1132,7 @@ class BulkUpsert2Test(TestCase):
             models.TestModel(int_field=2, char_field='2', float_field=2),
         ], ['int_field'], [], returning=True)
 
-        self.assertEquals(list(results), [])
+        self.assertEqual(list(results), [])
 
     def test_update_duplicate_fields_returning_none_updated(self):
         """
@@ -1150,7 +1150,7 @@ class BulkUpsert2Test(TestCase):
             models.TestModel(int_field=2, char_field='-1', float_field=-1),
         ], ['int_field'], ['char_field', 'float_field'], returning=True, ignore_duplicate_updates=True)
 
-        self.assertEquals(list(results), [])
+        self.assertEqual(list(results), [])
 
     def test_update_duplicate_fields_returning_some_updated(self):
         """
@@ -1168,9 +1168,9 @@ class BulkUpsert2Test(TestCase):
             models.TestModel(int_field=2, char_field='0', float_field=-1),
         ], ['int_field'], ['char_field', 'float_field'], returning=['char_field'], ignore_duplicate_updates=True)
 
-        self.assertEquals(list(results.created), [])
-        self.assertEquals(len(list(results.updated)), 1)
-        self.assertEquals(list(results.updated)[0].char_field, '0')
+        self.assertEqual(list(results.created), [])
+        self.assertEqual(len(list(results.updated)), 1)
+        self.assertEqual(list(results.updated)[0].char_field, '0')
 
     def test_update_duplicate_fields_returning_some_updated_return_untouched(self):
         """
@@ -1192,11 +1192,11 @@ class BulkUpsert2Test(TestCase):
             ['int_field'], ['char_field', 'float_field'],
             returning=['char_field'], ignore_duplicate_updates=True, return_untouched=True)
 
-        self.assertEquals(len(list(results.updated)), 1)
-        self.assertEquals(len(list(results.untouched)), 2)
-        self.assertEquals(len(list(results.created)), 1)
-        self.assertEquals(list(results.updated)[0].char_field, '0')
-        self.assertEquals(list(results.created)[0].char_field, '3')
+        self.assertEqual(len(list(results.updated)), 1)
+        self.assertEqual(len(list(results.untouched)), 2)
+        self.assertEqual(len(list(results.created)), 1)
+        self.assertEqual(list(results.updated)[0].char_field, '0')
+        self.assertEqual(list(results.created)[0].char_field, '3')
 
     def test_update_duplicate_fields_returning_some_updated_return_untouched_ignore_dups(self):
         """
@@ -1220,10 +1220,10 @@ class BulkUpsert2Test(TestCase):
             ['int_field'], ['char_field', 'float_field'],
             returning=['char_field'], ignore_duplicate_updates=False, return_untouched=True)
 
-        self.assertEquals(len(list(results.untouched)), 0)
-        self.assertEquals(len(list(results.updated)), 3)
-        self.assertEquals(len(list(results.created)), 1)
-        self.assertEquals(list(results.created)[0].char_field, '3')
+        self.assertEqual(len(list(results.untouched)), 0)
+        self.assertEqual(len(list(results.updated)), 3)
+        self.assertEqual(len(list(results.created)), 1)
+        self.assertEqual(list(results.created)[0].char_field, '3')
 
     def test_all_updates_unique_int_field(self):
         """
@@ -1242,7 +1242,7 @@ class BulkUpsert2Test(TestCase):
         ], ['int_field'], ['char_field', 'float_field'])
 
         # Verify that the fields were updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, str(i))
@@ -1265,7 +1265,7 @@ class BulkUpsert2Test(TestCase):
         ], ['int_field'], update_fields=['float_field'])
 
         # Verify that the float field was updated
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
@@ -1289,7 +1289,7 @@ class BulkUpsert2Test(TestCase):
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1' if i < 2 else '2')
@@ -1314,16 +1314,16 @@ class BulkUpsert2Test(TestCase):
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
         m1 = models.TestUniqueTzModel.objects.get(time_zone=timezone('US/Eastern'))
-        self.assertEquals(m1.char_field, '-1')
-        self.assertAlmostEquals(m1.float_field, 0)
+        self.assertEqual(m1.char_field, '-1')
+        self.assertAlmostEqual(m1.float_field, 0)
 
         m2 = models.TestUniqueTzModel.objects.get(time_zone=timezone('US/Central'))
-        self.assertEquals(m2.char_field, '-1')
-        self.assertAlmostEquals(m2.float_field, 1)
+        self.assertEqual(m2.char_field, '-1')
+        self.assertAlmostEqual(m2.float_field, 1)
 
         m3 = models.TestUniqueTzModel.objects.get(time_zone=timezone('UTC'))
-        self.assertEquals(m3.char_field, '2')
-        self.assertAlmostEquals(m3.float_field, 2)
+        self.assertEqual(m3.char_field, '2')
+        self.assertAlmostEqual(m3.float_field, 2)
 
     def test_some_updates_unique_int_char_field_update_float_field(self):
         """
@@ -1343,7 +1343,7 @@ class BulkUpsert2Test(TestCase):
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        self.assertEquals(models.TestModel.objects.count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, str(i))
@@ -1366,13 +1366,13 @@ class BulkUpsert2Test(TestCase):
         ], ['int_field', 'char_field'], ['float_field'])
 
         # Verify that no updates occured
-        self.assertEquals(models.TestModel.objects.count(), 6)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 6)
+        self.assertEqual(models.TestModel.objects.filter(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
             self.assertAlmostEqual(model_obj.float_field, -1)
-        self.assertEquals(models.TestModel.objects.exclude(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.exclude(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.exclude(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i + 3)
             self.assertEqual(model_obj.char_field, str(i))
@@ -1394,8 +1394,8 @@ class BulkUpsert2Test(TestCase):
         ], ['int_field'], ['float_field'])
 
         # Verify that two new objecs were created
-        self.assertEquals(models.TestModel.objects.count(), 5)
-        self.assertEquals(models.TestModel.objects.filter(char_field='-1').count(), 3)
+        self.assertEqual(models.TestModel.objects.count(), 5)
+        self.assertEqual(models.TestModel.objects.filter(char_field='-1').count(), 3)
         for i, model_obj in enumerate(models.TestModel.objects.filter(char_field='-1').order_by('int_field')):
             self.assertEqual(model_obj.int_field, i)
             self.assertEqual(model_obj.char_field, '-1')
@@ -1431,7 +1431,7 @@ class PostBulkOperationSignalTest(TestCase):
         model_obj.time_zone = timezone('US/Eastern')
         models.TestModel.objects.bulk_update([model_obj], ['time_zone'])
         model_obj = models.TestModel.objects.get(id=model_obj.id)
-        self.assertEquals(model_obj.time_zone, timezone('US/Eastern'))
+        self.assertEqual(model_obj.time_zone, timezone('US/Eastern'))
 
     def test_post_bulk_operation_queryset_update(self):
         """
@@ -1439,8 +1439,8 @@ class PostBulkOperationSignalTest(TestCase):
         """
         models.TestModel.objects.all().update(int_field=1)
 
-        self.assertEquals(self.signal_handler.model, models.TestModel)
-        self.assertEquals(self.signal_handler.num_times_called, 1)
+        self.assertEqual(self.signal_handler.model, models.TestModel)
+        self.assertEqual(self.signal_handler.num_times_called, 1)
 
     def test_post_bulk_operation_manager_update(self):
         """
@@ -1448,8 +1448,8 @@ class PostBulkOperationSignalTest(TestCase):
         """
         models.TestModel.objects.update(int_field=1)
 
-        self.assertEquals(self.signal_handler.model, models.TestModel)
-        self.assertEquals(self.signal_handler.num_times_called, 1)
+        self.assertEqual(self.signal_handler.model, models.TestModel)
+        self.assertEqual(self.signal_handler.num_times_called, 1)
 
     def test_post_bulk_operation_bulk_update(self):
         """
@@ -1458,8 +1458,8 @@ class PostBulkOperationSignalTest(TestCase):
         model_obj = models.TestModel.objects.create(int_field=2)
         models.TestModel.objects.bulk_update([model_obj], ['int_field'])
 
-        self.assertEquals(self.signal_handler.model, models.TestModel)
-        self.assertEquals(self.signal_handler.num_times_called, 1)
+        self.assertEqual(self.signal_handler.model, models.TestModel)
+        self.assertEqual(self.signal_handler.num_times_called, 1)
 
     def test_post_bulk_operation_bulk_upsert2(self):
         """
@@ -1468,8 +1468,8 @@ class PostBulkOperationSignalTest(TestCase):
         model_obj = models.TestModel.objects.create(int_field=2)
         models.TestModel.objects.bulk_upsert2([model_obj], ['int_field'])
 
-        self.assertEquals(self.signal_handler.model, models.TestModel)
-        self.assertEquals(self.signal_handler.num_times_called, 1)
+        self.assertEqual(self.signal_handler.model, models.TestModel)
+        self.assertEqual(self.signal_handler.num_times_called, 1)
 
     def test_post_bulk_operation_bulk_create(self):
         """
@@ -1477,8 +1477,8 @@ class PostBulkOperationSignalTest(TestCase):
         """
         models.TestModel.objects.bulk_create([models.TestModel(int_field=2)])
 
-        self.assertEquals(self.signal_handler.model, models.TestModel)
-        self.assertEquals(self.signal_handler.num_times_called, 1)
+        self.assertEqual(self.signal_handler.model, models.TestModel)
+        self.assertEqual(self.signal_handler.num_times_called, 1)
 
     def test_post_bulk_operation_bulk_create_queryset(self):
         """
@@ -1486,8 +1486,8 @@ class PostBulkOperationSignalTest(TestCase):
         """
         models.TestModel.objects.all().bulk_create([models.TestModel(int_field=2)])
 
-        self.assertEquals(self.signal_handler.model, models.TestModel)
-        self.assertEquals(self.signal_handler.num_times_called, 1)
+        self.assertEqual(self.signal_handler.model, models.TestModel)
+        self.assertEqual(self.signal_handler.num_times_called, 1)
 
     def test_save_doesnt_emit_signal(self):
         """
@@ -1496,7 +1496,7 @@ class PostBulkOperationSignalTest(TestCase):
         model_obj = models.TestModel.objects.create(int_field=2)
         model_obj.save()
 
-        self.assertEquals(self.signal_handler.num_times_called, 0)
+        self.assertEqual(self.signal_handler.num_times_called, 0)
 
 
 class IdDictTest(TestCase):
@@ -1507,7 +1507,7 @@ class IdDictTest(TestCase):
         """
         Tests the output when no objects are present in the manager.
         """
-        self.assertEquals(models.TestModel.objects.id_dict(), {})
+        self.assertEqual(models.TestModel.objects.id_dict(), {})
 
     def test_objects_manager(self):
         """
@@ -1515,7 +1515,7 @@ class IdDictTest(TestCase):
         """
         model_obj1 = G(models.TestModel, int_field=1)
         model_obj2 = G(models.TestModel, int_field=2)
-        self.assertEquals(models.TestModel.objects.id_dict(), {model_obj1.id: model_obj1, model_obj2.id: model_obj2})
+        self.assertEqual(models.TestModel.objects.id_dict(), {model_obj1.id: model_obj1, model_obj2.id: model_obj2})
 
     def test_no_objects_queryset(self):
         """
@@ -1523,7 +1523,7 @@ class IdDictTest(TestCase):
         """
         G(models.TestModel, int_field=1)
         G(models.TestModel, int_field=2)
-        self.assertEquals(models.TestModel.objects.filter(int_field__gte=3).id_dict(), {})
+        self.assertEqual(models.TestModel.objects.filter(int_field__gte=3).id_dict(), {})
 
     def test_objects_queryset(self):
         """
@@ -1531,7 +1531,7 @@ class IdDictTest(TestCase):
         """
         G(models.TestModel, int_field=1)
         model_obj = G(models.TestModel, int_field=2)
-        self.assertEquals(models.TestModel.objects.filter(int_field__gte=2).id_dict(), {model_obj.id: model_obj})
+        self.assertEqual(models.TestModel.objects.filter(int_field__gte=2).id_dict(), {model_obj.id: model_obj})
 
 
 class GetOrNoneTest(TestCase):
@@ -1545,7 +1545,7 @@ class GetOrNoneTest(TestCase):
         # Create an existing model
         model_obj = G(models.TestModel)
         # Verify that get_or_none on objects returns the test model
-        self.assertEquals(model_obj, models.TestModel.objects.get_or_none(id=model_obj.id))
+        self.assertEqual(model_obj, models.TestModel.objects.get_or_none(id=model_obj.id))
 
     def test_multiple_error_using_objects(self):
         """
@@ -1556,7 +1556,7 @@ class GetOrNoneTest(TestCase):
         model_obj = G(models.TestModel, char_field='hi')
         # Verify that get_or_none on objects returns the test model
         with self.assertRaises(models.TestModel.MultipleObjectsReturned):
-            self.assertEquals(model_obj, models.TestModel.objects.get_or_none(char_field='hi'))
+            self.assertEqual(model_obj, models.TestModel.objects.get_or_none(char_field='hi'))
 
     def test_existing_using_queryset(self):
         """
@@ -1565,7 +1565,7 @@ class GetOrNoneTest(TestCase):
         # Create an existing model
         model_obj = G(models.TestModel)
         # Verify that get_or_none on objects returns the test model
-        self.assertEquals(model_obj, models.TestModel.objects.filter(id=model_obj.id).get_or_none(id=model_obj.id))
+        self.assertEqual(model_obj, models.TestModel.objects.filter(id=model_obj.id).get_or_none(id=model_obj.id))
 
     def test_none_using_objects(self):
         """
@@ -1623,14 +1623,14 @@ class SingleTest(TestCase):
         Tests accessing a single object using Model.objects.
         """
         model_obj = G(models.TestModel)
-        self.assertEquals(model_obj, models.TestModel.objects.single())
+        self.assertEqual(model_obj, models.TestModel.objects.single())
 
     def test_single_using_queryset(self):
         """
         Tests accessing a single object using a queryset.
         """
         model_obj = G(models.TestModel)
-        self.assertEquals(model_obj, models.TestModel.objects.filter(id__gte=0).single())
+        self.assertEqual(model_obj, models.TestModel.objects.filter(id__gte=0).single())
 
     def test_mutliple_to_single_using_queryset(self):
         """
@@ -1639,7 +1639,7 @@ class SingleTest(TestCase):
         """
         model_obj = G(models.TestModel)
         G(models.TestModel)
-        self.assertEquals(model_obj, models.TestModel.objects.filter(id=model_obj.id).single())
+        self.assertEqual(model_obj, models.TestModel.objects.filter(id=model_obj.id).single())
 
 
 class BulkUpdateTest(TestCase):
@@ -1668,7 +1668,7 @@ class BulkUpdateTest(TestCase):
         t = G(models.TestPkForeignKey, char_field='hi')
         models.TestPkForeignKey.objects.bulk_update(
             [models.TestPkForeignKey(my_key_id=t.my_key_id, char_field='hello')], ['char_field'])
-        self.assertEquals(models.TestPkForeignKey.objects.count(), 1)
+        self.assertEqual(models.TestPkForeignKey.objects.count(), 1)
         self.assertTrue(models.TestPkForeignKey.objects.filter(char_field='hello', my_key=t.my_key).exists())
 
     def test_foreign_key_pk(self):
@@ -1679,7 +1679,7 @@ class BulkUpdateTest(TestCase):
         t = G(models.TestPkForeignKey, char_field='hi')
         models.TestPkForeignKey.objects.bulk_update(
             [models.TestPkForeignKey(my_key=t.my_key, char_field='hello')], ['char_field'])
-        self.assertEquals(models.TestPkForeignKey.objects.count(), 1)
+        self.assertEqual(models.TestPkForeignKey.objects.count(), 1)
         self.assertTrue(models.TestPkForeignKey.objects.filter(char_field='hello', my_key=t.my_key).exists())
 
     def test_char_pk(self):
@@ -1689,7 +1689,7 @@ class BulkUpdateTest(TestCase):
         G(models.TestPkChar, char_field='hi', my_key='1')
         models.TestPkChar.objects.bulk_update(
             [models.TestPkChar(my_key='1', char_field='hello')], ['char_field'])
-        self.assertEquals(models.TestPkChar.objects.count(), 1)
+        self.assertEqual(models.TestPkChar.objects.count(), 1)
         self.assertTrue(models.TestPkChar.objects.filter(char_field='hello', my_key='1').exists())
 
     def test_none(self):
@@ -1761,8 +1761,8 @@ class BulkUpdateTest(TestCase):
         # The test objects int fields should be untouched
         test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
         test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
-        self.assertEquals(test_obj_1.int_field, 1)
-        self.assertEquals(test_obj_2.int_field, 2)
+        self.assertEqual(test_obj_1.int_field, 1)
+        self.assertEqual(test_obj_2.int_field, 2)
 
     def test_objs_one_field_to_update(self):
         """
@@ -1778,8 +1778,8 @@ class BulkUpdateTest(TestCase):
         # The test objects int fields should be untouched
         test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
         test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
-        self.assertEquals(test_obj_1.int_field, 3)
-        self.assertEquals(test_obj_2.int_field, 4)
+        self.assertEqual(test_obj_1.int_field, 3)
+        self.assertEqual(test_obj_2.int_field, 4)
 
     def test_objs_one_field_to_update_ignore_other_field(self):
         """
@@ -1798,11 +1798,11 @@ class BulkUpdateTest(TestCase):
         # The test objects int fields should be untouched
         test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
         test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
-        self.assertEquals(test_obj_1.int_field, 3)
-        self.assertEquals(test_obj_2.int_field, 4)
+        self.assertEqual(test_obj_1.int_field, 3)
+        self.assertEqual(test_obj_2.int_field, 4)
         # The float fields should not be updated
-        self.assertEquals(test_obj_1.float_field, 1.0)
-        self.assertEquals(test_obj_2.float_field, 2.0)
+        self.assertEqual(test_obj_1.float_field, 1.0)
+        self.assertEqual(test_obj_2.float_field, 2.0)
 
     def test_objs_two_fields_to_update(self):
         """
@@ -1820,11 +1820,11 @@ class BulkUpdateTest(TestCase):
         # The test objects int fields should be untouched
         test_obj_1 = models.TestModel.objects.get(id=test_obj_1.id)
         test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
-        self.assertEquals(test_obj_1.int_field, 3)
-        self.assertEquals(test_obj_2.int_field, 4)
+        self.assertEqual(test_obj_1.int_field, 3)
+        self.assertEqual(test_obj_2.int_field, 4)
         # The float fields should be updated
-        self.assertEquals(test_obj_1.float_field, 3.0)
-        self.assertEquals(test_obj_2.float_field, 4.0)
+        self.assertEqual(test_obj_1.float_field, 3.0)
+        self.assertEqual(test_obj_2.float_field, 4.0)
 
     def test_updating_objects_with_custom_db_field_types(self):
         """
@@ -1863,12 +1863,12 @@ class BulkUpdateTest(TestCase):
         test_obj_2 = models.TestModel.objects.get(id=test_obj_2.id)
 
         # Assert that the json field was updated
-        self.assertEquals(test_obj_1.json_field, {'test': 'updated'})
-        self.assertEquals(test_obj_2.json_field, {'test2': 'updated'})
+        self.assertEqual(test_obj_1.json_field, {'test': 'updated'})
+        self.assertEqual(test_obj_2.json_field, {'test2': 'updated'})
 
         # Assert that the array field was updated
-        self.assertEquals(test_obj_1.array_field, ['one', 'two', 'updated'])
-        self.assertEquals(test_obj_2.array_field, ['three', 'four', 'updated'])
+        self.assertEqual(test_obj_1.array_field, ['one', 'two', 'updated'])
+        self.assertEqual(test_obj_2.array_field, ['three', 'four', 'updated'])
 
 
 class UpsertTest(TestCase):
@@ -1881,7 +1881,7 @@ class UpsertTest(TestCase):
         Tests that save isn't called on upsert after the object has been created.
         """
         model_obj, created = models.TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
-        self.assertEquals(mock_save.call_count, 1)
+        self.assertEqual(mock_save.call_count, 1)
 
     def test_save_on_update(self):
         """
@@ -1891,7 +1891,7 @@ class UpsertTest(TestCase):
 
         with patch.object(models.TestModel, 'save', spec_set=True) as mock_save:
             models.TestModel.objects.upsert(int_field=1, updates={'float_field': 1.1})
-            self.assertEquals(mock_save.call_count, 1)
+            self.assertEqual(mock_save.call_count, 1)
 
     def test_no_save_on_no_update(self):
         """
@@ -1901,7 +1901,7 @@ class UpsertTest(TestCase):
 
         with patch.object(models.TestModel, 'save', spec_set=True) as mock_save:
             models.TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
-            self.assertEquals(mock_save.call_count, 0)
+            self.assertEqual(mock_save.call_count, 0)
 
     def test_upsert_creation_no_defaults(self):
         """
@@ -1909,7 +1909,7 @@ class UpsertTest(TestCase):
         """
         model_obj, created = models.TestModel.objects.upsert(int_field=1)
         self.assertTrue(created)
-        self.assertEquals(model_obj.int_field, 1)
+        self.assertEqual(model_obj.int_field, 1)
         self.assertIsNone(model_obj.float_field)
         self.assertIsNone(model_obj.char_field)
 
@@ -1919,8 +1919,8 @@ class UpsertTest(TestCase):
         """
         model_obj, created = models.TestModel.objects.upsert(int_field=1, defaults={'float_field': 1.0})
         self.assertTrue(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 1.0)
         self.assertIsNone(model_obj.char_field)
 
     def test_upsert_creation_updates(self):
@@ -1929,8 +1929,8 @@ class UpsertTest(TestCase):
         """
         model_obj, created = models.TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
         self.assertTrue(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 1.0)
         self.assertIsNone(model_obj.char_field)
 
     def test_upsert_creation_defaults_updates(self):
@@ -1940,9 +1940,9 @@ class UpsertTest(TestCase):
         model_obj, created = models.TestModel.objects.upsert(
             int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello'})
         self.assertTrue(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 1.0)
-        self.assertEquals(model_obj.char_field, 'Hello')
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 1.0)
+        self.assertEqual(model_obj.char_field, 'Hello')
 
     def test_upsert_creation_no_defaults_override(self):
         """
@@ -1954,8 +1954,8 @@ class UpsertTest(TestCase):
             'test_model': test_model,
         })
         self.assertTrue(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.test_model, test_model)
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.test_model, test_model)
 
     def test_upsert_creation_defaults_updates_override(self):
         """
@@ -1965,9 +1965,9 @@ class UpsertTest(TestCase):
         model_obj, created = models.TestModel.objects.upsert(
             int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello', 'float_field': 2.0})
         self.assertTrue(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 2.0)
-        self.assertEquals(model_obj.char_field, 'Hello')
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 2.0)
+        self.assertEqual(model_obj.char_field, 'Hello')
 
     def test_upsert_no_creation_no_defaults(self):
         """
@@ -1976,7 +1976,7 @@ class UpsertTest(TestCase):
         G(models.TestModel, int_field=1, float_field=None, char_field=None)
         model_obj, created = models.TestModel.objects.upsert(int_field=1)
         self.assertFalse(created)
-        self.assertEquals(model_obj.int_field, 1)
+        self.assertEqual(model_obj.int_field, 1)
         self.assertIsNone(model_obj.float_field)
         self.assertIsNone(model_obj.char_field)
 
@@ -1987,7 +1987,7 @@ class UpsertTest(TestCase):
         G(models.TestModel, int_field=1, float_field=None, char_field=None)
         model_obj, created = models.TestModel.objects.upsert(int_field=1, defaults={'float_field': 1.0})
         self.assertFalse(created)
-        self.assertEquals(model_obj.int_field, 1)
+        self.assertEqual(model_obj.int_field, 1)
         self.assertIsNone(model_obj.float_field)
         self.assertIsNone(model_obj.char_field)
 
@@ -1998,8 +1998,8 @@ class UpsertTest(TestCase):
         G(models.TestModel, int_field=1, float_field=2.0, char_field=None)
         model_obj, created = models.TestModel.objects.upsert(int_field=1, updates={'float_field': 1.0})
         self.assertFalse(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 1.0)
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 1.0)
         self.assertIsNone(model_obj.char_field)
 
     def test_upsert_no_creation_defaults_updates(self):
@@ -2010,9 +2010,9 @@ class UpsertTest(TestCase):
         model_obj, created = models.TestModel.objects.upsert(
             int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello'})
         self.assertFalse(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 2.0)
-        self.assertEquals(model_obj.char_field, 'Hello')
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 2.0)
+        self.assertEqual(model_obj.char_field, 'Hello')
 
     def test_upsert_no_creation_defaults_updates_override(self):
         """
@@ -2022,6 +2022,6 @@ class UpsertTest(TestCase):
         model_obj, created = models.TestModel.objects.upsert(
             int_field=1, defaults={'float_field': 1.0}, updates={'char_field': 'Hello', 'float_field': 2.0})
         self.assertFalse(created)
-        self.assertEquals(model_obj.int_field, 1)
-        self.assertEquals(model_obj.float_field, 2.0)
-        self.assertEquals(model_obj.char_field, 'Hello')
+        self.assertEqual(model_obj.int_field, 1)
+        self.assertEqual(model_obj.float_field, 2.0)
+        self.assertEqual(model_obj.char_field, 'Hello')
