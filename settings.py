@@ -12,41 +12,53 @@ def configure_settings():
         test_db = os.environ.get('DB', None)
         if test_db is None:
             db_config = {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': 'ambition',
-                'USER': 'ambition',
-                'PASSWORD': 'ambition',
-                'HOST': 'db'
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'ambition_test',
+                'USER': 'postgres',
+                'PASSWORD': '',
+                'HOST': 'db',
             }
         elif test_db == 'postgres':
             db_config = {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'USER': 'postgres',
+                'ENGINE': 'django.db.backends.postgresql',
                 'NAME': 'manager_utils',
-                }
+                'USER': 'travis',
+                'PORT': '5433',
+            }
+            # db_config = {
+            #     'ENGINE': 'django.db.backends.postgresql',
+            #     'NAME': 'manager_utils',
+            #     'USER': 'postgres',
+            #     'PASSWORD': '',
+            #     'HOST': 'db',
+            # }
         elif test_db == 'sqlite':
             db_config = {
                 'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': 'manager_utils',
-                }
+            }
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
+        installed_apps = [
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+            'django.contrib.sessions',
+            'django.contrib.admin',
+            'manager_utils',
+            'manager_utils.tests',
+        ]
+
         settings.configure(
-            TEST_RUNNER='django_nose.NoseTestSuiteRunner',
-            NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
-            MIDDLEWARE_CLASSES={},
             DATABASES={
                 'default': db_config,
             },
-            INSTALLED_APPS=(
-                'django.contrib.auth',
-                'django.contrib.contenttypes',
-                'django.contrib.sessions',
-                'django.contrib.admin',
-                'manager_utils',
-                'manager_utils.tests',
-            ),
+            MIDDLEWARE_CLASSES={},
+            INSTALLED_APPS=installed_apps,
             ROOT_URLCONF='manager_utils.urls',
             DEBUG=False,
+            NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
+            TEST_RUNNER='django_nose.NoseTestSuiteRunner',
+            SECRET_KEY='*',
+            USE_DEPRECATED_PYTZ=True,
         )
