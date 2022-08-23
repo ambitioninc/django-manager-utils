@@ -33,6 +33,12 @@ setup(
     url='http://github.com/ambitioninc/django-manager-utils/',
     author='Wes Kendall',
     author_email='opensource@ambition.com',
+    project_urls={
+        "Bug Tracker": "https://github.com/ambitioninc/django-manager-utils/issues",
+        "Changes": "https://django-manager-utils.readthedocs.io/en/latest/release_notes.html",
+        "Documentation": "https://django-manager-utils.readthedocs.io/en/latest/",
+        "Source Code": "https://github.com/ambitioninc/django-manager-utils",
+    },
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python',

@@ -7,3 +7,4 @@ pytz
 django-timezone-field==4.0
 parameterized
 freezegun
+flake8

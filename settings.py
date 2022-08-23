@@ -1,4 +1,5 @@
 import os
+import json
 
 from django.conf import settings
 
@@ -39,6 +40,9 @@ def configure_settings():
             }
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
+
+        if os.environ.get('DB_SETTINGS'):
+            db_config = json.loads(os.environ.get('DB_SETTINGS'))
 
         installed_apps = [
             'django.contrib.auth',
