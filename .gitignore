@@ -1,6 +1,8 @@
 # Compiled python files
 *.pyc
 
+.tox/
+
 # Vim files
 *.swp
 *.swo

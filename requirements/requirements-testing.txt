@@ -4,6 +4,7 @@ psycopg2
 django-nose>=1.3
 django-dynamic-fixture
 pytz
-django-timezone-field
+django-timezone-field==4.0
 parameterized
 freezegun
+flake8
