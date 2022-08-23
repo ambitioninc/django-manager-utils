@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.0.1
+------
+* Switch to github actions
+
 v3.0.0
 ------
 * Add support for django 3.2, 4.0, 4.1
