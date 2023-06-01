@@ -5,7 +5,7 @@ from django_dynamic_fixture import G
 import freezegun
 from manager_utils import post_bulk_operation
 from manager_utils.manager_utils import _get_prepped_model_field
-from mock import patch
+from unittest.mock import patch
 from parameterized import parameterized
 from pytz import timezone
 
