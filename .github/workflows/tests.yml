@@ -22,7 +22,7 @@ jobs:
         - 'Django~=4.0.0'
         - 'Django~=4.1.0'
         - 'Django~=4.2.0'
-        experimental: [false]
+        experimental: [true]
         include:
         - python: '3.9'
           django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
