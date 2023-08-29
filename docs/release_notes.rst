@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v3.1.2
+------
+* Bump django-query-builder for psycopg3 support
+
+v3.1.1
+------
+* Read the Docs config file v2
+* Github actions for testing psycopg3
+
 v3.1.0
 ------
 * Drop django 2.2

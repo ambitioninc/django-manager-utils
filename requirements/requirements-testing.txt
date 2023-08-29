@@ -1,5 +1,4 @@
 coverage
-psycopg2
 django-nose>=1.3
 django-dynamic-fixture
 pytz
