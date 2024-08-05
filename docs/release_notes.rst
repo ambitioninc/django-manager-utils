@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.1.3
+------
+* Added object ordering to upserts and updates to help reduce the number of deadlocks
+
 v3.1.2
 ------
 * Bump django-query-builder for psycopg3 support
