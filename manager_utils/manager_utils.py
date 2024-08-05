@@ -1,7 +1,7 @@
 import itertools
 from typing import List
 
-from django.db import connection
+from django.db import connection, connections, models
 from django.db.models import Manager, Model
 from django.db.models.query import QuerySet
 from django.dispatch import Signal
@@ -84,6 +84,40 @@ def _fetch_models_by_pk(queryset: QuerySet, models: List[Model]) -> List[Model]:
     return list(
         queryset.filter(pk__in=[model.pk for model in models])
     )
+
+
+def _get_field_db_val(queryset, field, value, connection):
+    if hasattr(value, "resolve_expression"):  # pragma: no cover
+        # Handle cases when the field is of type "Func" and other expressions.
+        # This is useful for libraries like django-rdkit that can't easily be tested
+        return value.resolve_expression(queryset.query, allow_joins=False, for_save=True)
+    else:
+        return field.get_db_prep_save(value, connection)
+
+
+def _model_fields(model: models.Model) -> List[models.Field]:
+    """Return the fields of a model, excluding generated and non-concrete ones."""
+    return [f for f in model._meta.fields if not getattr(f, "generated", False) and f.concrete]
+
+
+def _sort_by_unique_fields(queryset, model_objs, unique_fields):
+    """
+    Sort a list of models by their unique fields.
+
+    Sorting models in an upsert greatly reduces the chances of deadlock
+    when doing concurrent upserts
+    """
+    model = queryset.model
+    connection = connections[queryset.db]
+    unique_fields = [field for field in _model_fields(model) if field.attname in unique_fields]
+
+    def sort_key(model_obj):
+        return tuple(
+            _get_field_db_val(queryset, field, getattr(model_obj, field.attname), connection)
+            for field in unique_fields
+        )
+
+    return sorted(model_objs, key=sort_key)
 
 
 def bulk_upsert(
@@ -189,6 +223,9 @@ def bulk_upsert(
     if not unique_fields:
         raise ValueError('Must provide unique_fields argument')
     update_fields = update_fields or []
+
+    # Sore the models to prevent deadlocks
+    model_objs = _sort_by_unique_fields(queryset, model_objs, unique_fields)
 
     if native:
         if return_upserts_distinct:
@@ -499,6 +536,9 @@ def bulk_update(manager, model_objs, fields_to_update):
         10, 20.0
 
     """
+
+    # Sort the model objects to reduce the likelihood of deadlocks
+    model_objs = sorted(model_objs, key=lambda obj: obj.pk)
 
     # Add the pk to the value fields so we can join
     value_fields = [manager.model._meta.pk.attname] + fields_to_update
