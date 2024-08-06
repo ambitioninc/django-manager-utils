@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.1.4
+------
+* revert psycopg3 code
+
 v3.1.3
 ------
 * Added object ordering to upserts and updates to help reduce the number of deadlocks
