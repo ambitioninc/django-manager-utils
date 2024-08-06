@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.1.5
+------
+* Do not sort records when doing an upsert
+
 v3.1.4
 ------
 * revert psycopg3 code
