@@ -553,8 +553,7 @@ def bulk_update(manager, model_objs, fields_to_update):
         'UPDATE {table} '
         'SET {update_fields_sql} '
         'FROM (VALUES {values_sql}) AS new_values ({value_fields_sql}) '
-        'WHERE "{table}"."{pk_field}" = "new_values"."{pk_field}" '
-        'ORDER BY "{table}"."{pk_field}"'
+        'WHERE "{table}"."{pk_field}" = "new_values"."{pk_field}"'
     ).format(
         table=manager.model._meta.db_table,
         pk_field=manager.model._meta.pk.column,
