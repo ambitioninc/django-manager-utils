@@ -1,5 +1,6 @@
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import JSONField
 from manager_utils import ManagerUtilsManager
 from timezone_field import TimeZoneField
 
