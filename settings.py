@@ -47,8 +47,7 @@ def configure_settings():
         installed_apps = [
             'django.contrib.auth',
             'django.contrib.contenttypes',
-            'django.contrib.sessions',
-            'django.contrib.admin',
+            'django.contrib.postgres',
             'manager_utils',
             'manager_utils.tests',
         ]
@@ -57,12 +56,9 @@ def configure_settings():
             DATABASES={
                 'default': db_config,
             },
-            MIDDLEWARE_CLASSES={},
             INSTALLED_APPS=installed_apps,
-            ROOT_URLCONF='manager_utils.urls',
+            ROOT_URLCONF='manager_utils.tests.urls',
             DEBUG=False,
-            NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
-            TEST_RUNNER='django_nose.NoseTestSuiteRunner',
+            USE_TZ=False,
             SECRET_KEY='*',
-            USE_DEPRECATED_PYTZ=True,
         )

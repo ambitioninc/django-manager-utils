@@ -7,7 +7,7 @@ from manager_utils import post_bulk_operation
 from manager_utils.manager_utils import _get_prepped_model_field
 from unittest.mock import patch
 from parameterized import parameterized
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 from manager_utils.tests import models
 
@@ -772,22 +772,22 @@ class BulkUpsertTest(TestCase):
 
         # Update using the int field as a uniqueness constraint. The first two are updated while the third is created
         models.TestModel.objects.bulk_upsert([
-            models.TestModel(time_zone=timezone('US/Eastern'), char_field='0', float_field=0),
-            models.TestModel(time_zone=timezone('US/Central'), char_field='1', float_field=1),
-            models.TestModel(time_zone=timezone('UTC'), char_field='2', float_field=2),
+            models.TestModel(time_zone=ZoneInfo('US/Eastern'), char_field='0', float_field=0),
+            models.TestModel(time_zone=ZoneInfo('US/Central'), char_field='1', float_field=1),
+            models.TestModel(time_zone=ZoneInfo('UTC'), char_field='2', float_field=2),
         ], ['time_zone'], ['float_field'])
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        m1 = models.TestModel.objects.get(time_zone=timezone('US/Eastern'))
+        m1 = models.TestModel.objects.get(time_zone=ZoneInfo('US/Eastern'))
         self.assertEqual(m1.char_field, '-1')
         self.assertAlmostEqual(m1.float_field, 0)
 
-        m2 = models.TestModel.objects.get(time_zone=timezone('US/Central'))
+        m2 = models.TestModel.objects.get(time_zone=ZoneInfo('US/Central'))
         self.assertEqual(m2.char_field, '-1')
         self.assertAlmostEqual(m2.float_field, 1)
 
-        m3 = models.TestModel.objects.get(time_zone=timezone('UTC'))
+        m3 = models.TestModel.objects.get(time_zone=ZoneInfo('UTC'))
         self.assertEqual(m3.char_field, '2')
         self.assertAlmostEqual(m3.float_field, 2)
 
@@ -1306,22 +1306,22 @@ class BulkUpsert2Test(TestCase):
 
         # Update using the int field as a uniqueness constraint. The first two are updated while the third is created
         models.TestUniqueTzModel.objects.bulk_upsert2([
-            models.TestModel(time_zone=timezone('US/Eastern'), char_field='0', float_field=0),
-            models.TestModel(time_zone=timezone('US/Central'), char_field='1', float_field=1),
-            models.TestModel(time_zone=timezone('UTC'), char_field='2', float_field=2),
+            models.TestModel(time_zone=ZoneInfo('US/Eastern'), char_field='0', float_field=0),
+            models.TestModel(time_zone=ZoneInfo('US/Central'), char_field='1', float_field=1),
+            models.TestModel(time_zone=ZoneInfo('UTC'), char_field='2', float_field=2),
         ], ['time_zone'], ['float_field'])
 
         # Verify that the float field was updated for the first two models and the char field was not updated for
         # the first two. The char field, however, should be '2' for the third model since it was created
-        m1 = models.TestUniqueTzModel.objects.get(time_zone=timezone('US/Eastern'))
+        m1 = models.TestUniqueTzModel.objects.get(time_zone=ZoneInfo('US/Eastern'))
         self.assertEqual(m1.char_field, '-1')
         self.assertAlmostEqual(m1.float_field, 0)
 
-        m2 = models.TestUniqueTzModel.objects.get(time_zone=timezone('US/Central'))
+        m2 = models.TestUniqueTzModel.objects.get(time_zone=ZoneInfo('US/Central'))
         self.assertEqual(m2.char_field, '-1')
         self.assertAlmostEqual(m2.float_field, 1)
 
-        m3 = models.TestUniqueTzModel.objects.get(time_zone=timezone('UTC'))
+        m3 = models.TestUniqueTzModel.objects.get(time_zone=ZoneInfo('UTC'))
         self.assertEqual(m3.char_field, '2')
         self.assertAlmostEqual(m3.float_field, 2)
 
@@ -1428,10 +1428,10 @@ class PostBulkOperationSignalTest(TestCase):
 
     def test_custom_field_bulk_update(self):
         model_obj = models.TestModel.objects.create(int_field=2)
-        model_obj.time_zone = timezone('US/Eastern')
+        model_obj.time_zone = ZoneInfo('US/Eastern')
         models.TestModel.objects.bulk_update([model_obj], ['time_zone'])
         model_obj = models.TestModel.objects.get(id=model_obj.id)
-        self.assertEqual(model_obj.time_zone, timezone('US/Eastern'))
+        self.assertEqual(model_obj.time_zone, ZoneInfo('US/Eastern'))
 
     def test_post_bulk_operation_queryset_update(self):
         """

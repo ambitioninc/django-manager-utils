@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+v4.0.0
+------
+* Support django 5.2 and 6.0, python 3.10 - 3.14
+* Drop support for python < 3.10 and django < 5.2
+* Require django-query-builder >= 4.0.0 (the release line tested against the
+  same django/python matrix)
+* Replace django-nose with Django's ``DiscoverRunner`` (which also runs system
+  checks: the test models now use ``django.db.models.JSONField`` instead of the
+  removed postgres ``JSONField``, and ``django.contrib.postgres`` is installed
+  for ``ArrayField``)
+* Test expectations use ``zoneinfo`` (django-timezone-field 5+ returns
+  ``ZoneInfo`` values) and the settings pin ``USE_TZ=False`` explicitly now that
+  django 5.0+ defaults it to ``True``
+* Remove the long-dead ``MIDDLEWARE_CLASSES`` and ``USE_DEPRECATED_PYTZ`` test settings
+
 v3.1.5
 ------
 * Do not sort records when doing an upsert
