@@ -1,2 +1,2 @@
 Django>=5.2
-django-query-builder>=3.1.0
+django-query-builder>=4.0.0
